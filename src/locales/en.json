@@ -1,15 +1,16 @@
 {
-  "title": "AI CAREER COACH",
-  "select": "Choose CV",
-  "analyze": "Analyze",
-  "lang": "Language",
-  "status": "Processing...",
-  "placeholder": "Job URL...",
-  "copy": "Copy",
+  "brandName": "AI CAREER COACH",
   "history": "HISTORY",
   "clear": "CLEAR",
-  "empty": "No history yet",
-  "pdf": "Download PDF",
-  "success": "Success! ✨",
-  "error": "Error ❌"
+  "noHistory": "No history yet",
+  "uploadResume": "Upload Resume (PDF)",
+  "jobUrlPlaceholder": "Job URL...",
+  "analyzeNow": "Analyze Now",
+  "analyzing": "Analyzing...",
+  "analysisResult": "Analysis Result",
+  "copyReport": "Copy Report",
+  "waitingForInput": "Waiting for input analysis...",
+  "copied": "Copied",
+  "analysisReportTitle": "Analysis Report",
+  "downloadPdf": "Download PDF"
 }

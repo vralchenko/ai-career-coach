@@ -1,15 +1,16 @@
 {
-  "title": "AI COACH DE CARRERA",
-  "select": "Elegir CV",
-  "analyze": "Analizar",
-  "lang": "Idioma",
-  "status": "Procesando...",
-  "placeholder": "URL del empleo...",
-  "copy": "Copiar",
+  "brandName": "AI COACH DE CARRERA",
   "history": "HISTORIAL",
   "clear": "LIMPIAR",
-  "empty": "Sin historial",
-  "pdf": "Descargar PDF",
-  "success": "¡Éxito! ✨",
-  "error": "Error ❌"
+  "noHistory": "Aún no hay historial",
+  "uploadResume": "Subir Currículum (PDF)",
+  "jobUrlPlaceholder": "URL de la vacante...",
+  "analyzeNow": "Analizar ahora",
+  "analyzing": "Analizando...",
+  "analysisResult": "Resultado del análisis",
+  "copyReport": "Copiar informe",
+  "waitingForInput": "Esperando análisis de entrada...",
+  "copied": "Copiado",
+  "analysisReportTitle": "Informe de análisis",
+  "downloadPdf": "Descargar PDF"
 }
