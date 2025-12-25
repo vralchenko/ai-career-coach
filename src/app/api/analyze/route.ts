@@ -25,21 +25,25 @@ export async function POST(req: Request) {
         try {
             const browser = await puppeteer.launch({
                 headless: true,
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--no-first-run',
+                    '--no-zygote',
                     '--single-process'
-                ],
-                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+                ]
             });
             const page = await browser.newPage();
-            await page.goto(jobUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
             jobText = await page.evaluate(() => document.body.innerText.substring(0, 10000));
             await browser.close();
         } catch (puppeteerError: any) {
             console.error('PUPPETEER ERROR:', puppeteerError.message);
-            throw new Error(`Scraping failed: ${puppeteerError.message}`);
+            throw new Error(`Browser Error: ${puppeteerError.message}`);
         }
 
         const ollama = new Ollama({ host: process.env.OLLAMA_HOST });
@@ -61,9 +65,8 @@ export async function POST(req: Request) {
                         controller.enqueue(encoder.encode(part.message.content));
                     }
                     controller.close();
-                } catch (streamError: any) {
-                    console.error('STREAM ERROR:', streamError.message);
-                    controller.error(streamError);
+                } catch (err: any) {
+                    controller.error(err);
                 }
             },
         });
