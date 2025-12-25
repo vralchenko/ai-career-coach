@@ -12,7 +12,7 @@ interface InputSectionProps {
 }
 
 export const InputSection: React.FC<InputSectionProps> = ({
-                                                              file, setFile, jobUrl, setJobUrl, loading, onStart
+                                                              file, setFile, jobUrl, setJobUrl, loading, onStart, t
                                                           }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -34,7 +34,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                 <div className={`flex flex-col items-center justify-center gap-3 py-4 border-2 border-dashed rounded-2xl transition-colors ${file ? 'border-emerald-500/50 bg-emerald-50/10' : 'border-slate-200 dark:border-slate-800 group-hover:border-indigo-500'}`}>
                     {file ? <FileText className="w-8 h-8 text-emerald-500" /> : <Upload className="w-8 h-8 text-slate-400" />}
                     <span className="text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-tighter px-4 text-center truncate w-full">
-            {file ? file.name : 'Upload Resume (PDF)'}
+            {file ? file.name : t.uploadResume}
           </span>
                 </div>
             </div>
@@ -44,7 +44,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                     <LinkIcon className="absolute left-4 w-5 h-5 text-slate-400" />
                     <input
                         type="text"
-                        placeholder="Job URL..."
+                        placeholder={t.jobUrlPlaceholder}
                         value={jobUrl}
                         onChange={(e) => setJobUrl(e.target.value)}
                         className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:outline-none focus:border-indigo-500 transition-all text-slate-900 dark:text-white"
@@ -64,7 +64,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
                     disabled={loading || !file || !jobUrl}
                     className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
                 >
-                    {loading ? 'Analyzing...' : 'Analyze Now'}
+                    {loading ? t.analyzing : t.analyzeNow}
                 </button>
             </div>
         </div>

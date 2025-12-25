@@ -8,13 +8,28 @@ import uk from '@/locales/uk.json';
 const translations: Record<string, any> = { en, de, es, ru, uk };
 
 export function useTranslation() {
-    const [lang, setLang] = useState('en');
+    const [lang, setLang] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('app_lang') || 'en';
+        }
+        return 'en';
+    });
 
     useEffect(() => {
-        window.dispatchEvent(new CustomEvent('lang_change', { detail: lang }));
-    }, [lang]);
+        const handleLangChange = (e: any) => {
+            setLang(e.detail);
+        };
+        window.addEventListener('lang_update', handleLangChange);
+        return () => window.removeEventListener('lang_update', handleLangChange);
+    }, []);
+
+    const updateLang = (newLang: string) => {
+        localStorage.setItem('app_lang', newLang);
+        setLang(newLang);
+        window.dispatchEvent(new CustomEvent('lang_update', { detail: newLang }));
+    };
 
     const t = translations[lang] || translations['en'];
 
-    return { t, lang, setLang };
+    return { t, lang, setLang: updateLang };
 }

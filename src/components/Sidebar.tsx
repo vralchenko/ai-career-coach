@@ -13,9 +13,10 @@ interface HistoryItem {
 
 interface SidebarProps {
     onSelect: (report: string, url: string) => void;
+    t: any;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onSelect }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onSelect, t }) => {
     const [history, setHistory] = useState<HistoryItem[]>([]);
 
     const loadHistory = () => {
@@ -48,14 +49,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelect }) => {
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                     <Clock size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">History</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">{t.history}</span>
                 </div>
                 {history.length > 0 && (
                     <button
                         onClick={clearHistory}
                         className="text-[10px] font-bold text-red-500 hover:text-red-600 uppercase transition-colors"
                     >
-                        Clear
+                        {t.clear}
                     </button>
                 )}
             </div>
@@ -63,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelect }) => {
             <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2 custom-scrollbar">
                 {history.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 opacity-20 italic text-sm">
-                        No history yet
+                        {t.noHistory}
                     </div>
                 ) : (
                     history.map((item) => (

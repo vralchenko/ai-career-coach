@@ -1,15 +1,16 @@
 {
-  "title": "AI КАР’ЄРНИЙ КОУЧ",
-  "select": "Обрати CV",
-  "analyze": "Аналізувати",
-  "lang": "Мова",
-  "status": "Обробка...",
-  "placeholder": "Посилання...",
-  "copy": "Копіювати",
+  "brandName": "AI КАР'ЄРНИЙ КОУЧ",
   "history": "ІСТОРІЯ",
   "clear": "ОЧИСТИТИ",
-  "empty": "Історія порожня",
-  "pdf": "Скачати PDF",
-  "success": "Готово! ✨",
-  "error": "Помилка ❌"
+  "noHistory": "Історії ще немає",
+  "uploadResume": "Завантажити резюме (PDF)",
+  "jobUrlPlaceholder": "Посилання на вакансію...",
+  "analyzeNow": "Аналізувати",
+  "analyzing": "Аналізуємо...",
+  "analysisResult": "Результат аналізу",
+  "copyReport": "Копіювати звіт",
+  "waitingForInput": "Очікування даних для аналізу...",
+  "copied": "Скопійовано",
+  "analysisReportTitle": "Звіт про аналіз",
+  "downloadPdf": "Завантажити PDF"
 }

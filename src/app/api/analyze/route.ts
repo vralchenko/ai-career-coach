@@ -32,7 +32,6 @@ export async function POST(req: Request) {
 
         const ollama = new Ollama({ host: process.env.OLLAMA_HOST });
 
-        // Включаем stream: true для мгновенного начала вывода
         const response = await ollama.chat({
             model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
             messages: [

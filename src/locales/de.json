@@ -1,15 +1,16 @@
 {
-  "title": "AI KARRIERE-COACH",
-  "select": "CV auswählen",
-  "analyze": "Analysieren",
-  "lang": "Sprache",
-  "status": "Wird bearbeitet...",
-  "placeholder": "Job-Link...",
-  "copy": "Kopieren",
+  "brandName": "AI KARRIERE-COACH",
   "history": "VERLAUF",
   "clear": "LÖSCHEN",
-  "empty": "Kein Verlauf",
-  "pdf": "PDF Herunterladen",
-  "success": "Erfolg! ✨",
-  "error": "Fehler ❌"
+  "noHistory": "Noch kein Verlauf",
+  "uploadResume": "Lebenslauf hochladen (PDF)",
+  "jobUrlPlaceholder": "Job-URL...",
+  "analyzeNow": "Jetzt analysieren",
+  "analyzing": "Analysiere...",
+  "analysisResult": "Analyseergebnis",
+  "copyReport": "Bericht kopieren",
+  "waitingForInput": "Warten auf Eingabeanalyse...",
+  "copied": "Kopiert",
+  "analysisReportTitle": "Analysebericht",
+  "downloadPdf": "PDF herunterladen"
 }

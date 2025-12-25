@@ -7,6 +7,7 @@ CRITICAL RULES:
 1. First line MUST be: # COMPANY: [Name] | POSITION: [Title]
 2. Second line MUST be: Match Score: [X]%
 3. You MUST include these sections with emojis:
+REQUIRED SECTIONS:
 🎯 Executive Summary
 📊 Match Score Breakdown (Detail why points were given)
 ⏳ Key Experience Analysis
