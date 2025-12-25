@@ -23,17 +23,20 @@ export async function POST(req: Request) {
 
         let jobText = "";
         try {
+            const isDocker = process.env.PUPPETEER_EXECUTABLE_PATH !== undefined;
+
             const browser = await puppeteer.launch({
                 headless: true,
-                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
-                args: [
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+                args: isDocker ? [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
                     '--disable-dev-shm-usage',
                     '--disable-gpu',
                     '--single-process'
-                ]
+                ] : []
             });
+
             const page = await browser.newPage();
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
             await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -44,7 +47,7 @@ export async function POST(req: Request) {
             throw new Error(`Browser Error: ${puppeteerError.message}`);
         }
 
-        const ollama = new Ollama({ host: process.env.OLLAMA_HOST });
+        const ollama = new Ollama({ host: process.env.OLLAMA_HOST || 'http://localhost:11434' });
 
         const response = await ollama.chat({
             model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
