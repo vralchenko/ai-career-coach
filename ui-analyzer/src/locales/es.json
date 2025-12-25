@@ -1,0 +1,15 @@
+{
+  "title": "AI COACH DE CARRERA",
+  "select": "Elegir CV",
+  "analyze": "Analizar",
+  "lang": "Idioma",
+  "status": "Procesando...",
+  "placeholder": "URL del empleo...",
+  "copy": "Copiar",
+  "history": "HISTORIAL",
+  "clear": "LIMPIAR",
+  "empty": "Sin historial",
+  "pdf": "Descargar PDF",
+  "success": "¡Éxito! ✨",
+  "error": "Error ❌"
+}
