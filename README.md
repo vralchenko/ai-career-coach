@@ -1,81 +1,54 @@
-# AI Career Coach 🚀 (Local LLM Edition)
+# AI Career Coach 🤖💼
 
-AI Career Coach is a high-performance web application designed to analyze resumes against job descriptions. This version is built to run entirely on your local infrastructure using **Ollama**, ensuring your sensitive resume data never leaves your machine.
+A professional tool designed to analyze the alignment between a resume and job requirements. The system uses AI to conduct a deep comparison of skills, identify critical gaps, and prepare candidates for interviews.
 
-## ✨ Features
+## 🚀 Key Features
 
-- **Privacy First**: All processing is done locally via Ollama; no external AI APIs are required.
-- **Real-time Streaming**: Experience near-instant feedback as the AI generates the analysis report word-by-word.
-- **Match Score Indicator**: A visual breakdown of how well you align with the job requirements.
-- **Comprehensive Sections**:
-    - 🎯 Executive Summary
-    - 📊 Match Score Breakdown (mathematical justification)
-    - ⏳ Key Experience Analysis
-    - 🛠 Tech Stack Comparison (✅/⚠️/❌)
-    - 🚀 Strengths & ⚠️ Critical Gaps
-    - 🎤 Interview Roadmap (5 technical questions with expected answers)
-- **Export to PDF**: Save your tailored analysis as a professional multi-page PDF document.
-- **Persistent History**: Your analysis history is saved locally in your browser for quick access.
-- **Multi-language Support**: Fully localized for English, German, Spanish, Russian, and Ukrainian.
+* **Smart Analysis**: Compares PDF resumes with job descriptions directly from a URL.
+* **Interview Roadmap**: Automatically generates 5 technical questions based on identified gaps with expected answers.
+* **Multi-language Support**: Full support for English, Russian, Ukrainian, German, and Spanish.
+* **PDF Export**: Save a beautifully formatted analysis report with color-coded sections.
+* **Markdown Rendering**: Clean, professional report visualization with headers, lists, and bold accents.
 
 ## 🛠 Tech Stack
 
-- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **LLM Engine**: [Ollama](https://ollama.com/)
-- **Model**: `llama3.1:8b` (Optimized for technical recruiting analysis)
-- **PDF Generation**: [jsPDF](https://github.com/parallax/jsPDF) & [html-to-image](https://github.com/bubkoo/html-to-image)
-- **Icons**: [Lucide React](https://lucide.dev/)
+* **Frontend**: Next.js 15 (App Router), Tailwind CSS, Lucide Icons.
+* **Backend**: Next.js API Routes, Puppeteer (for job scraping).
+* **AI Engine**: Ollama (Llama 3.1 8B model).
+* **Deployment**: Render (Docker Runtime).
 
-## 🚀 Getting Started
+## ⚙️ Setup and Installation
 
-### Prerequisites
+### 1. Prerequisites
+* Node.js 20+
+* Ollama installed (locally or on a remote server)
+* Cloudflare Tunnel (if Ollama is running behind NAT)
 
-1.  **Install Ollama**: Download and install from [ollama.com](https://ollama.com/).
-2.  **Pull the Model**:
-    ```bash
-    ollama pull llama3.1:8b
-    ```
-3.  **Environment Setup**: Ensure Ollama is running. If you face CORS issues, start Ollama with:
-    ```bash
-    OLLAMA_ORIGINS="*" ollama serve
-    ```
+### 2. Environment Variables
+Create a `.env.local` file in the root directory:
 
-### Installation
+```env
+OLLAMA_HOST=[https://your-tunnel-url.trycloudflare.com](https://your-tunnel-url.trycloudflare.com)
+OLLAMA_MODEL=llama3.1:8b
+```
 
-1.  **Clone the repository**:
-    ```bash
-    git clone [https://github.com/your-username/ai-career-coach.git](https://github.com/your-username/ai-career-coach.git)
-    cd ai-career-coach
-    ```
+### Block 3: Docker Deployment and Project Structure
+## 🐳 Deployment (Docker / Render)
 
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
+To ensure Puppeteer works correctly in a cloud environment, this project is configured to run via Docker.
 
-3.  **Configure Environment Variables**:
-    Create a `.env.local` file in the root directory:
-    ```env
-    OLLAMA_HOST=http://localhost:11434
-    OLLAMA_MODEL=llama3.1:8b
-    ```
+1. **Service Creation**: Select `Docker` as the Runtime when creating a New Web Service on Render.
+2. **Environment Variables on Render**:
+   - `OLLAMA_HOST`: Your tunnel URL.
+   - `PUPPETEER_EXECUTABLE_PATH`: `/usr/bin/google-chrome-stable`.
+   - `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD`: `true`.
 
-4.  **Launch the App**:
-    ```bash
-    npm run dev
-    ```
+## 📂 Project Structure
 
-5.  **Access the Dashboard**:
-    Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 📝 Configuration
-
-The AI's logic and report structure are defined in `src/lib/prompts.ts`. You can modify the `SYSTEM_PROMPT` to change how the model evaluates candidates or to add new sections to the report.
+* `src/app/api/analyze`: Main logic for analysis and response streaming from Ollama.
+* `src/app/api/pdf`: Logic for generating PDF documents from Markdown text.
+* `src/components/OutputArea`: Report visualization with Markdown style support.
+* `src/lib/prompts`: System instructions and formatting rules for the AI recruiter.
 
 ## 📄 License
-
-This project is licensed under the MIT License.
-
----
-*Helping you land your dream job, one local token at a time.* 
+MIT
