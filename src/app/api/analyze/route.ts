@@ -22,37 +22,46 @@ export async function POST(req: Request) {
         const resumeData = await pdf(Buffer.from(arrayBuffer));
 
         let jobText = "";
-        try {
-            const isDocker = process.env.PUPPETEER_EXECUTABLE_PATH !== undefined;
+        const isDocker = process.env.PUPPETEER_EXECUTABLE_PATH !== undefined;
 
-            const browser = await puppeteer.launch({
-                headless: true,
-                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-                args: isDocker ? [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu',
-                    '--single-process'
-                ] : []
+        const browser = await puppeteer.launch({
+            headless: true,
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-extensions'
+            ]
+        });
+
+        try {
+            const page = await browser.newPage();
+            await page.setRequestInterception(true);
+            page.on('request', (req) => {
+                if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
+                    req.abort();
+                } else {
+                    req.continue();
+                }
             });
 
-            const page = await browser.newPage();
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
-            try {
-                await page.goto(jobUrl, {
-                    waitUntil: 'domcontentloaded',
-                    timeout: 60000
-                });
-            } catch (navError) {
-                console.warn('Navigation warning');
-            }
+            await page.goto(jobUrl, {
+                waitUntil: 'domcontentloaded',
+                timeout: 30000
+            });
 
-            jobText = await page.evaluate(() => document.body.innerText.substring(0, 10000));
+            jobText = await page.evaluate(() => document.body.innerText.substring(0, 5000));
+        } catch (error: any) {
+            jobText = "Job description unavailable.";
+        } finally {
             await browser.close();
-        } catch (puppeteerError: any) {
-            throw new Error(`Browser Error: ${puppeteerError.message}`);
         }
 
         const ollama = new Ollama({ host: process.env.OLLAMA_HOST || 'http://localhost:11434' });
