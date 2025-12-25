@@ -21,14 +21,26 @@ export async function POST(req: Request) {
         const arrayBuffer = await resumeFile.arrayBuffer();
         const resumeData = await pdf(Buffer.from(arrayBuffer));
 
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
-        const page = await browser.newPage();
-        await page.goto(jobUrl, { waitUntil: 'networkidle2', timeout: 60000 });
-        const jobText = await page.evaluate(() => document.body.innerText.substring(0, 12000));
-        await browser.close();
+        let jobText = "";
+        try {
+            const browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--single-process'
+                ],
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+            });
+            const page = await browser.newPage();
+            await page.goto(jobUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+            jobText = await page.evaluate(() => document.body.innerText.substring(0, 10000));
+            await browser.close();
+        } catch (puppeteerError: any) {
+            console.error('PUPPETEER ERROR:', puppeteerError.message);
+            throw new Error(`Scraping failed: ${puppeteerError.message}`);
+        }
 
         const ollama = new Ollama({ host: process.env.OLLAMA_HOST });
 
@@ -44,15 +56,21 @@ export async function POST(req: Request) {
         const stream = new ReadableStream({
             async start(controller) {
                 const encoder = new TextEncoder();
-                for await (const part of response) {
-                    controller.enqueue(encoder.encode(part.message.content));
+                try {
+                    for await (const part of response) {
+                        controller.enqueue(encoder.encode(part.message.content));
+                    }
+                    controller.close();
+                } catch (streamError: any) {
+                    console.error('STREAM ERROR:', streamError.message);
+                    controller.error(streamError);
                 }
-                controller.close();
             },
         });
 
         return new Response(stream);
-    } catch (e) {
-        return new Response('Analysis failed', { status: 500 });
+    } catch (e: any) {
+        console.error('GLOBAL API ERROR:', e.message);
+        return new Response(`Analysis failed: ${e.message}`, { status: 500 });
     }
 }
