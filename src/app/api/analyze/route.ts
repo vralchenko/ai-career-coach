@@ -39,11 +39,19 @@ export async function POST(req: Request) {
 
             const page = await browser.newPage();
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-            await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+            try {
+                await page.goto(jobUrl, {
+                    waitUntil: 'domcontentloaded',
+                    timeout: 60000
+                });
+            } catch (navError) {
+                console.warn('Navigation warning');
+            }
+
             jobText = await page.evaluate(() => document.body.innerText.substring(0, 10000));
             await browser.close();
         } catch (puppeteerError: any) {
-            console.error('PUPPETEER ERROR:', puppeteerError.message);
             throw new Error(`Browser Error: ${puppeteerError.message}`);
         }
 
@@ -74,7 +82,6 @@ export async function POST(req: Request) {
 
         return new Response(stream);
     } catch (e: any) {
-        console.error('GLOBAL API ERROR:', e.message);
         return new Response(`Analysis failed: ${e.message}`, { status: 500 });
     }
 }
