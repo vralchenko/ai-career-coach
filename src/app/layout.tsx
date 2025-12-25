@@ -25,7 +25,7 @@ export default function RootLayout({
             disableTransitionOnChange
         >
             <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#0a0a0c]">
-                <main className="flex-grow pb-20">
+                <main className="flex-grow pb-24">
                     {children}
                 </main>
                 <Footer />
