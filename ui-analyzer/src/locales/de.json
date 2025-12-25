@@ -1,0 +1,15 @@
+{
+  "title": "AI KARRIERE-COACH",
+  "select": "CV auswählen",
+  "analyze": "Analysieren",
+  "lang": "Sprache",
+  "status": "Wird bearbeitet...",
+  "placeholder": "Job-Link...",
+  "copy": "Kopieren",
+  "history": "VERLAUF",
+  "clear": "LÖSCHEN",
+  "empty": "Kein Verlauf",
+  "pdf": "PDF Herunterladen",
+  "success": "Erfolg! ✨",
+  "error": "Fehler ❌"
+}
