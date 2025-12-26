@@ -1,10 +1,7 @@
 import { Ollama } from 'ollama';
 import puppeteer from 'puppeteer';
-import { createRequire } from 'module';
+import pdf from 'pdf-parse-fork';
 import { SYSTEM_PROMPT, USER_PROMPT } from '@/lib/prompts';
-
-const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse-fork');
 
 export async function POST(req: Request) {
     try {
@@ -22,7 +19,6 @@ export async function POST(req: Request) {
         const resumeData = await pdf(Buffer.from(arrayBuffer));
 
         let jobText = "";
-        const isDocker = process.env.PUPPETEER_EXECUTABLE_PATH !== undefined;
 
         const browser = await puppeteer.launch({
             headless: true,
@@ -41,16 +37,19 @@ export async function POST(req: Request) {
 
         try {
             const page = await browser.newPage();
-            await page.setRequestInterception(true);
-            page.on('request', (req) => {
-                if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
-                    req.abort();
-                } else {
-                    req.continue();
-                }
+
+            await page.setExtraHTTPHeaders({
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             });
 
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            await page.setRequestInterception(true);
+            page.on('request', (interceptedRequest) => {
+                if (['image', 'stylesheet', 'font', 'media'].includes(interceptedRequest.resourceType())) {
+                    interceptedRequest.abort();
+                } else {
+                    interceptedRequest.continue();
+                }
+            });
 
             await page.goto(jobUrl, {
                 waitUntil: 'domcontentloaded',

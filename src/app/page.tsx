@@ -44,10 +44,12 @@ export default function Home() {
       const response = await fetch('/api/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ report, lang }),
+        body: JSON.stringify({ html: report, lang }),
       });
 
-      if (!response.ok) throw new Error('PDF generation failed');
+      if (!response.ok) {
+        return;
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -55,16 +57,16 @@ export default function Home() {
       a.href = url;
 
       const metaMatch = report.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
-      const fileName = metaMatch
+      a.download = metaMatch
           ? `${metaMatch[1]}_${metaMatch[2]}.pdf`.replace(/\s+/g, '_')
           : 'Analysis_Report.pdf';
 
-      a.download = fileName;
       document.body.appendChild(a);
       a.click();
+      window.URL.revokeObjectURL(url);
       a.remove();
     } catch (e) {
-      console.error('Error downloading PDF:', e);
+      console.error(e);
     }
   };
 
@@ -121,7 +123,7 @@ export default function Home() {
         window.dispatchEvent(new Event('history_updated'));
       }
     } catch (e) {
-      console.error('Analysis error:', e);
+      console.error(e);
     } finally {
       setLoading(false);
     }
