@@ -1,68 +1,70 @@
 'use client';
 
-import React from 'react';
-import { Copy, Sparkles, FileSearch, FileDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { Copy, FileDown, Loader2, BarChart3 } from 'lucide-react';
 
 interface OutputAreaProps {
     report: string;
     loading: boolean;
+    // Исправлено: добавлена поддержка null для RefObject
     scrollRef: React.RefObject<HTMLDivElement | null>;
     onCopy: () => void;
     onDownloadPdf: () => void;
     t: any;
 }
 
-export const OutputArea: React.FC<OutputAreaProps> = ({
-                                                          report, loading, scrollRef, onCopy, onDownloadPdf, t
-                                                      }) => {
+export function OutputArea({ report, loading, scrollRef, onCopy, onDownloadPdf, t }: OutputAreaProps) {
+    if (!loading && !report) return null;
+
     return (
-        <div className="bg-white dark:bg-[#111114] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[400px]">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-[#16161a]">
+        <div className="bg-white dark:bg-[#111114] rounded-2xl lg:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[500px] lg:h-[600px]">
+            <div className="p-3 lg:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50 dark:bg-white/5">
                 <div className="flex items-center gap-2">
-                    <FileSearch size={16} className="text-indigo-500" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-            {t.analysisResult}
-          </span>
+                    <BarChart3 size={18} className="text-indigo-500" />
+                    <h2 className="text-[10px] lg:text-xs font-black uppercase tracking-widest text-slate-500">
+                        {t.analysisReportTitle}
+                    </h2>
                 </div>
-                <div className="flex items-center gap-2">
-                    {report && (
-                        <>
-                            <button onClick={onCopy} className="flex items-center gap-2 px-3 py-1.5 rounded-xl border dark:border-slate-700 text-[10px] font-bold uppercase hover:border-indigo-500 transition-all shadow-sm">
-                                <Copy size={12} /> {t.copyReport}
-                            </button>
-                            <button onClick={onDownloadPdf} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-[10px] font-bold uppercase hover:bg-indigo-700 transition-all shadow-md">
-                                <FileDown size={12} /> {t.downloadPdf}
-                            </button>
-                        </>
-                    )}
-                </div>
+
+                {report && (
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button
+                            onClick={onCopy}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-white dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-50 transition-all dark:text-white"
+                        >
+                            <Copy size={14} />
+                            <span className="inline">{t.copyReport}</span>
+                        </button>
+                        <button
+                            onClick={onDownloadPdf}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/10"
+                        >
+                            <FileDown size={14} />
+                            <span className="inline">{t.downloadPdf}</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
-            <div className="flex-1 p-8 overflow-y-auto custom-scrollbar" ref={scrollRef}>
-                {!report && !loading ? (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4 opacity-40">
-                        <Sparkles size={40} />
-                        <p className="text-xs font-bold uppercase tracking-widest">{t.waitingForInput}</p>
+            <div
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar scroll-smooth"
+            >
+                {loading && !report ? (
+                    <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
+                        <Loader2 className="animate-spin text-indigo-500" size={32} />
+                        <p className="text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] animate-pulse">
+                            {t.initializingAI}
+                        </p>
                     </div>
                 ) : (
-                    <div className="max-w-none text-slate-900 dark:text-slate-200">
-                        <ReactMarkdown
-                            components={{
-                                h1: ({node, ...props}) => <h1 className="text-2xl font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight mb-4 mt-2 border-b pb-2" {...props} />,
-                                h2: ({node, ...props}) => <h2 className="text-xl font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-tight mb-2 mt-6 flex items-center gap-2" {...props} />,
-                                p: ({node, ...props}) => <p className="leading-relaxed mb-3 text-sm" {...props} />,
-                                ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1 text-sm" {...props} />,
-                                li: ({node, ...props}) => <li className="pl-1" {...props} />,
-                                strong: ({node, ...props}) => <strong className="font-black text-indigo-600 dark:text-indigo-400" {...props} />,
-                            }}
-                        >
+                    <div className="prose prose-slate dark:prose-invert max-w-none prose-sm lg:prose-base animate-in fade-in duration-700">
+                        <ReactMarkdown>
                             {report}
                         </ReactMarkdown>
-                        {loading && <span className="inline-block w-2 h-4 ml-1 bg-indigo-500 animate-pulse" />}
                     </div>
                 )}
             </div>
         </div>
     );
-};
+}
