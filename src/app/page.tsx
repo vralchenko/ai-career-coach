@@ -5,9 +5,10 @@ import { useTheme } from 'next-themes';
 import { Sidebar } from '@/components/Sidebar';
 import { InputSection } from '@/components/InputSection';
 import { OutputArea } from '@/components/OutputArea';
+import { Footer } from '@/components/Footer';
 import { useTranslation } from '@/hooks/useTranslation';
 import RobotIcon from '../components/RobotIcon';
-import { Sun, Moon, CheckCircle, Menu, X } from 'lucide-react';
+import { Sun, Moon, CheckCircle, Menu, X, AlertCircle } from 'lucide-react';
 
 export default function Home() {
   const { t, lang, setLang } = useTranslation();
@@ -21,19 +22,18 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'auto'; };
   }, []);
 
   const handleCopy = () => {
     if (!report) return;
-    const cleanText = report
-        .replace(/^#\s*COMPANY:.*$/m, '')
-        .replace(/Match Score:\s*\d+%/i, '')
-        .trim();
-
+    const cleanText = report.replace(/^#\s*COMPANY:.*$/m, '').replace(/Match Score:\s*\d+%/i, '').trim();
     navigator.clipboard.writeText(cleanText).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -55,25 +55,20 @@ export default function Home() {
         const a = document.createElement('a');
         a.href = url;
         const metaMatch = report.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
-        a.download = metaMatch
-            ? `${metaMatch[1]}_${metaMatch[2]}.pdf`.replace(/\s+/g, '_')
-            : 'Analysis_Report.pdf';
+        a.download = metaMatch ? `${metaMatch[1]}_${metaMatch[2]}.pdf`.replace(/\s+/g, '_') : 'Analysis_Report.pdf';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         a.remove();
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setPdfLoading(false);
-    }
+    } catch (e) { console.error(e); } finally { setPdfLoading(false); }
   };
 
   const handleStart = async () => {
     if (!resumeText || !jobUrl) return;
     setLoading(true);
     setReport('');
+    setErrorMessage(null);
 
     const formData = new FormData();
     formData.append('resume', resumeText);
@@ -82,36 +77,36 @@ export default function Home() {
 
     try {
       const res = await fetch('/api/analyze', { method: 'POST', body: formData });
-      if (!res.ok) return;
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        setErrorMessage(errorData.error || "Unknown Error");
+        setLoading(false);
+        return;
+      }
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let fullText = '';
-      let buffer = '';
-
       if (reader) {
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
           for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
-            if (trimmedLine.startsWith('data: ')) {
+            if (line.startsWith('data: ')) {
               try {
-                const jsonString = trimmedLine.replace('data: ', '');
-                const data = JSON.parse(jsonString);
-                const content = data.choices[0]?.delta?.content || "";
-                fullText += content;
-                setReport(fullText);
-                if (scrollRef.current) {
-                  scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                const data = JSON.parse(line.replace('data: ', ''));
+                if (data.choices[0]?.delta?.content) {
+                  const content = data.choices[0].delta.content;
+                  fullText += content;
+                  setReport(fullText);
+                  if (scrollRef.current) {
+                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                  }
                 }
-              } catch (e) {
-                console.warn("Stream error", e);
-              }
+              } catch (e) {}
             }
           }
         }
@@ -128,8 +123,8 @@ export default function Home() {
         localStorage.setItem('analysis_history', JSON.stringify([historyItem, ...existing].slice(0, 20)));
         window.dispatchEvent(new Event('history_updated'));
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      setErrorMessage(e.message);
     } finally {
       setLoading(false);
     }
@@ -138,87 +133,70 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-      <div className="flex h-screen bg-slate-50 dark:bg-[#08080a] overflow-hidden relative font-sans">
-        <div className={`
-          fixed inset-0 z-50 lg:relative lg:inset-auto lg:flex
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          transition-transform duration-300 ease-in-out
-        `}>
-          <Sidebar t={t} onSelect={(rep, url) => { setReport(rep); setJobUrl(url); setIsSidebarOpen(false); }} />
+      <div className="flex h-screen w-screen bg-slate-50 dark:bg-[#08080a] overflow-hidden relative font-sans text-slate-900 dark:text-slate-100">
+        <div className={`fixed inset-0 z-50 lg:relative lg:inset-auto lg:flex ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} transition-transform duration-300`}>
+          <Sidebar t={t} onSelect={(rep, url) => { setReport(rep); setJobUrl(url); setIsSidebarOpen(false); setErrorMessage(null); }} />
           {isSidebarOpen && (
-              <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="absolute top-4 right-4 p-2 bg-white dark:bg-[#111114] rounded-full lg:hidden shadow-lg border dark:border-slate-800"
-              >
-                <X size={24} />
-              </button>
+              <button onClick={() => setIsSidebarOpen(false)} className="absolute top-4 right-4 p-2 bg-white dark:bg-[#111114] rounded-full shadow-md text-slate-600"><X size={18} /></button>
           )}
         </div>
 
         {copied && (
-            <div className="fixed top-4 lg:top-24 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
-              <CheckCircle size={14} />
-              <span className="text-[10px] lg:text-xs font-black uppercase">{t.copied}</span>
+            <div className="fixed top-4 lg:top-16 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
+              <CheckCircle size={12} />
+              <span className="text-[10px] font-black uppercase">{t.copied}</span>
             </div>
         )}
 
-        <main className="flex-1 overflow-y-auto p-3 lg:p-6 custom-scrollbar relative">
-          <div className="max-w-4xl mx-auto flex flex-col gap-4 lg:gap-6">
-            <header className="flex justify-between items-center bg-white dark:bg-[#111114] p-3 lg:p-5 rounded-2xl lg:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <div className="flex items-center gap-2 lg:gap-4">
-                <button
-                    onClick={() => setIsSidebarOpen(true)}
-                    className="p-2 lg:hidden text-slate-600 dark:text-slate-400"
-                >
-                  <Menu size={20} />
-                </button>
-                <h1 className="text-base lg:text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent uppercase tracking-tight leading-none">
-                  {t.brandName}
-                </h1>
-                {loading && <RobotIcon className="w-6 h-6 lg:w-8 lg:h-8 text-indigo-500 animate-spin" />}
+        <main className="flex-1 h-screen flex flex-col overflow-hidden relative">
+          <div className="flex-1 overflow-hidden p-2 lg:p-4 flex flex-col items-center w-full">
+            <div className="max-w-4xl w-full flex flex-col gap-2 h-full overflow-hidden">
+              <header className="flex justify-between items-center bg-white dark:bg-[#111114] p-2 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setIsSidebarOpen(true)} className="p-1 lg:hidden text-slate-600 dark:text-slate-400"><Menu size={16} /></button>
+                  <h1 className="text-[11px] lg:text-[13px] font-black uppercase tracking-tight">{t.brandName}</h1>
+                  {loading && <RobotIcon className="w-4 h-4 animate-spin text-indigo-500" />}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700">
+                    {theme === 'dark' ? <Sun size={12} /> : <Moon size={12} />}
+                  </button>
+                  <select value={lang} onChange={(e) => setLang(e.target.value)} className="bg-slate-100 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded-lg text-[9px] font-black uppercase outline-none cursor-pointer">
+                    {['en', 'de', 'es', 'ru', 'uk'].map(l => (<option key={l} value={l}>{l.toUpperCase()}</option>))}
+                  </select>
+                </div>
+              </header>
+
+              <div className="shrink-0">
+                <InputSection file={file} setFile={setFile} setResumeText={setResumeText} jobUrl={jobUrl} setJobUrl={setJobUrl} loading={loading} onStart={handleStart} t={t} />
               </div>
 
-              <div className="flex items-center gap-2 lg:gap-3">
-                <button
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className="p-2 lg:p-2.5 rounded-xl lg:rounded-2xl bg-slate-100 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-yellow-400 shadow-sm hover:scale-105 transition-transform"
-                >
-                  {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                </button>
-
-                <select
-                    value={lang}
-                    onChange={(e) => setLang(e.target.value)}
-                    className="bg-slate-100 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700 px-2 lg:px-4 py-1.5 lg:py-2 rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black uppercase text-slate-900 dark:text-white outline-none cursor-pointer"
-                >
-                  {['en', 'de', 'es', 'ru', 'uk'].map(l => (
-                      <option key={l} value={l}>{l.toUpperCase()}</option>
-                  ))}
-                </select>
+              <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden mb-1">
+                {errorMessage && (
+                    <div className="shrink-0 p-2.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-xl flex items-start gap-2.5 animate-in fade-in zoom-in duration-300">
+                      <AlertCircle className="text-amber-600 shrink-0 w-4 h-4" />
+                      <div className="flex flex-col gap-0">
+                        <p className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">System Notice</p>
+                        <p className="text-[10px] text-amber-800 dark:text-amber-300 leading-tight font-medium break-all">{errorMessage}</p>
+                      </div>
+                      <button onClick={() => setErrorMessage(null)} className="ml-auto p-0.5 text-amber-600"><X size={12} /></button>
+                    </div>
+                )}
+                <div className="flex-1 min-h-0 overflow-hidden rounded-b-2xl lg:rounded-b-3xl">
+                  <OutputArea
+                      report={report}
+                      loading={loading}
+                      pdfLoading={pdfLoading}
+                      scrollRef={scrollRef}
+                      onCopy={handleCopy}
+                      onDownloadPdf={handleDownloadPdf}
+                      t={t}
+                  />
+                </div>
               </div>
-            </header>
-
-            <InputSection
-                file={file}
-                setFile={setFile}
-                setResumeText={setResumeText}
-                jobUrl={jobUrl}
-                setJobUrl={setJobUrl}
-                loading={loading}
-                onStart={handleStart}
-                t={t}
-            />
-
-            <OutputArea
-                report={report}
-                loading={loading}
-                pdfLoading={pdfLoading}
-                scrollRef={scrollRef}
-                onCopy={handleCopy}
-                onDownloadPdf={handleDownloadPdf}
-                t={t}
-            />
+            </div>
           </div>
+          <Footer />
         </main>
       </div>
   );
