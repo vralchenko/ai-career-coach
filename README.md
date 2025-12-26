@@ -8,47 +8,55 @@ A professional tool designed to analyze the alignment between a resume and job r
 * **Interview Roadmap**: Automatically generates 5 technical questions based on identified gaps with expected answers.
 * **Multi-language Support**: Full support for English, Russian, Ukrainian, German, and Spanish.
 * **PDF Export**: Save a beautifully formatted analysis report with color-coded sections.
-* **Markdown Rendering**: Clean, professional report visualization with headers, lists, and bold accents.
+* **Real-time Streaming**: Optimized SSE processing with buffering to ensure smooth AI response visualization.
 
 ## 🛠 Tech Stack
 
-* **Frontend**: Next.js 15 (App Router), Tailwind CSS, Lucide Icons.
-* **Backend**: Next.js API Routes, Puppeteer (for job scraping).
-* **AI Engine**: Ollama (Llama 3.1 8B model).
+* **Frontend**: Next.js 16 (App Router), Turbopack, Tailwind CSS, Lucide Icons.
+* **Backend**: Next.js API Routes, Puppeteer (for job scraping and PDF generation).
+* **AI Engine**: Groq Cloud API (Llama 3.1 8B / 70B models).
 * **Deployment**: Render (Docker Runtime).
 
 ## ⚙️ Setup and Installation
 
 ### 1. Prerequisites
 * Node.js 20+
-* Ollama installed (locally or on a remote server)
-* Cloudflare Tunnel (if Ollama is running behind NAT)
+* Groq API Key (from Groq Console)
 
 ### 2. Environment Variables
-Create a `.env.local` file in the root directory:
+Create a `.env` file in the root directory:
 
 ```env
-OLLAMA_HOST=[https://your-tunnel-url.trycloudflare.com](https://your-tunnel-url.trycloudflare.com)
-OLLAMA_MODEL=llama3.1:8b
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_API_URL=[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)
+OLLAMA_MODEL=llama-3.1-8b-instant
 ```
 
-### Block 3: Docker Deployment and Project Structure
-## 🐳 Deployment (Docker / Render)
+### 3. Installation
 
-To ensure Puppeteer works correctly in a cloud environment, this project is configured to run via Docker.
+```bash
+npm install
+npm run dev
+```
 
-1. **Service Creation**: Select `Docker` as the Runtime when creating a New Web Service on Render.
-2. **Environment Variables on Render**:
-   - `OLLAMA_HOST`: Your tunnel URL.
-   - `PUPPETEER_EXECUTABLE_PATH`: `/usr/bin/google-chrome-stable`.
-   - `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD`: `true`.
+## Deployment (Docker / Render)
 
-## 📂 Project Structure
+1. **Service Creation**  
+   Select **Docker** as the Runtime when creating a New Web Service on [Render](https://render.com).
 
-* `src/app/api/analyze`: Main logic for analysis and response streaming from Ollama.
-* `src/app/api/pdf`: Logic for generating PDF documents from Markdown text.
-* `src/components/OutputArea`: Report visualization with Markdown style support.
-* `src/lib/prompts`: System instructions and formatting rules for the AI recruiter.
+2. **Environment Variables on Render**
+    - `GROQ_API_KEY`: Your production API key
+    - `PUPPETEER_EXECUTABLE_PATH`: `/usr/bin/google-chrome-stable`
+    - `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD`: `true`
 
-## 📄 License
-MIT
+## Project Structure
+
+- `src/app/api/analyze`: Logic for resume parsing and Groq API streaming.
+- `src/app/api/pdf`: Service for generating A4 PDF documents from Markdown content.
+- `src/components/OutputArea`: Real-time report visualization with Markdown support.
+- `src/lib/prompts`: Refined system instructions for the AI recruiter and career coach.
+
+## License
+
+This project is licensed under the MIT License.
+
