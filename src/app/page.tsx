@@ -7,7 +7,7 @@ import { InputSection } from '@/components/InputSection';
 import { OutputArea } from '@/components/OutputArea';
 import { useTranslation } from '@/hooks/useTranslation';
 import RobotIcon from '../components/RobotIcon';
-import { Sun, Moon, CheckCircle } from 'lucide-react';
+import { Sun, Moon, CheckCircle, Loader2 } from 'lucide-react';
 
 export default function Home() {
   const { t, lang, setLang } = useTranslation();
@@ -17,6 +17,7 @@ export default function Home() {
   const [jobUrl, setJobUrl] = useState('');
   const [report, setReport] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +39,9 @@ export default function Home() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!report) return;
+    if (!report || pdfLoading) return;
+
+    setPdfLoading(true);
 
     try {
       const response = await fetch('/api/pdf', {
@@ -47,9 +50,7 @@ export default function Home() {
         body: JSON.stringify({ html: report, lang }),
       });
 
-      if (!response.ok) {
-        return;
-      }
+      if (!response.ok) return;
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -67,6 +68,8 @@ export default function Home() {
       a.remove();
     } catch (e) {
       console.error(e);
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -139,6 +142,13 @@ export default function Home() {
             <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
               <CheckCircle size={16} />
               <span className="text-xs font-bold uppercase tracking-widest">{t.copied}</span>
+            </div>
+        )}
+
+        {pdfLoading && (
+            <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-indigo-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 border border-white/20 backdrop-blur-sm">
+              <Loader2 size={18} className="animate-spin" />
+              <span className="text-xs font-black uppercase tracking-widest">Generating PDF...</span>
             </div>
         )}
 
