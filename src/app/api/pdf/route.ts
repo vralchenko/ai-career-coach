@@ -5,20 +5,25 @@ export async function POST(req: Request) {
     let browser;
     try {
         const { html: markdownText, lang = 'en' } = await req.json();
+
         if (!markdownText || markdownText.trim() === "" || markdownText === "undefined") {
             return new Response("Error: Content is empty", { status: 400 });
         }
 
         const contentHtml = marked.parse(markdownText);
+
         const finalHtml = `
             <!DOCTYPE html>
             <html lang="${lang}">
             <head>
                 <meta charset="UTF-8">
-                <script src="https://cdn.tailwindcss.com"></script>
                 <style>
                     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-                    body { font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.6; }
+                    body { 
+                        font-family: 'Inter', 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; 
+                        color: #1e293b; 
+                        line-height: 1.6; 
+                    }
                     h1 { color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 24px; font-weight: 900; }
                     h2 { color: #4f46e5; margin-top: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
                     ul { margin-bottom: 16px; }
@@ -29,7 +34,9 @@ export async function POST(req: Request) {
                 </style>
             </head>
             <body class="p-10 bg-white">
-                <div class="max-w-4xl mx-auto">${contentHtml}</div>
+                <div class="max-w-4xl mx-auto">
+                    ${contentHtml}
+                </div>
             </body>
             </html>
         `;
@@ -37,11 +44,22 @@ export async function POST(req: Request) {
         browser = await puppeteer.launch({
             headless: true,
             executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process', '--no-zygote']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--single-process',
+                '--no-zygote',
+                '--font-render-hinting=none'
+            ]
         });
 
         const page = await browser.newPage();
-        await page.setContent(finalHtml, { waitUntil: ['domcontentloaded', 'networkidle0'], timeout: 30000 });
+        await page.setContent(finalHtml, {
+            waitUntil: ['domcontentloaded', 'networkidle0'],
+            timeout: 30000
+        });
+
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const pdfBuffer = await page.pdf({
@@ -51,7 +69,10 @@ export async function POST(req: Request) {
         });
 
         return new Response(pdfBuffer as any, {
-            headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="analysis.pdf"' }
+            headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'attachment; filename="analysis.pdf"'
+            }
         });
     } catch (e: any) {
         console.error('PDF Generation Error:', e);
