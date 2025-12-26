@@ -1,95 +1,67 @@
-import { Ollama } from 'ollama';
 import puppeteer from 'puppeteer';
-import pdf from 'pdf-parse-fork';
 import { SYSTEM_PROMPT, USER_PROMPT } from '@/lib/prompts';
+import pdf from 'pdf-parse-fork';
 
 export async function POST(req: Request) {
     try {
         const formData = await req.formData();
+        const file = formData.get('resume') as File;
         const jobUrl = formData.get('jobUrl') as string;
-        const resumeFile = formData.get('resume') as File;
-        const langCode = (formData.get('lang') as string) || 'en';
+        const targetLanguage = (formData.get('language') as string) || 'en';
 
-        const langMap: Record<string, string> = {
-            'ru': 'Russian', 'en': 'English', 'uk': 'Ukrainian', 'de': 'German', 'es': 'Spanish'
-        };
-        const targetLanguage = langMap[langCode] || 'English';
+        if (!file || !jobUrl) return new Response('Missing data', { status: 400 });
 
-        const arrayBuffer = await resumeFile.arrayBuffer();
+        const arrayBuffer = await file.arrayBuffer();
         const resumeData = await pdf(Buffer.from(arrayBuffer));
-
-        let jobText = "";
 
         const browser = await puppeteer.launch({
             headless: true,
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--no-first-run',
-                '--no-zygote',
                 '--single-process',
-                '--disable-extensions'
-            ]
+                '--no-zygote'
+            ],
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
         });
 
         try {
             const page = await browser.newPage();
+            await page.setUserAgent(
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                { architecture: 'x86', mobile: false, model: '', platform: 'Windows', platformVersion: '10.0.0' }
+            );
 
-            await page.setExtraHTTPHeaders({
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            });
-
-            await page.setRequestInterception(true);
-            page.on('request', (interceptedRequest) => {
-                if (['image', 'stylesheet', 'font', 'media'].includes(interceptedRequest.resourceType())) {
-                    interceptedRequest.abort();
-                } else {
-                    interceptedRequest.continue();
-                }
-            });
-
-            await page.goto(jobUrl, {
-                waitUntil: 'domcontentloaded',
-                timeout: 30000
-            });
-
-            jobText = await page.evaluate(() => document.body.innerText.substring(0, 5000));
-        } catch (error: any) {
-            jobText = "Job description unavailable.";
-        } finally {
+            await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+            const jobText = await page.evaluate(() => document.body.innerText);
             await browser.close();
+
+            const response = await fetch(process.env.GROQ_API_URL || "https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: process.env.OLLAMA_MODEL || "llama-3.1-8b-instant",
+                    messages: [
+                        { role: 'system', content: SYSTEM_PROMPT(targetLanguage) },
+                        { role: 'user', content: USER_PROMPT(resumeData.text, jobText) }
+                    ],
+                    stream: true,
+                })
+            });
+
+            if (!response.ok) return new Response('AI Service Error', { status: 500 });
+            return new Response(response.body);
+
+        } catch (innerError: any) {
+            if (browser) await browser.close();
+            return new Response(`Browser error: ${innerError.message}`, { status: 500 });
         }
-
-        const ollama = new Ollama({ host: process.env.OLLAMA_HOST || 'http://localhost:11434' });
-
-        const response = await ollama.chat({
-            model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
-            messages: [
-                { role: 'system', content: SYSTEM_PROMPT(targetLanguage) },
-                { role: 'user', content: USER_PROMPT(resumeData.text, jobText) }
-            ],
-            stream: true,
-        });
-
-        const stream = new ReadableStream({
-            async start(controller) {
-                const encoder = new TextEncoder();
-                try {
-                    for await (const part of response) {
-                        controller.enqueue(encoder.encode(part.message.content));
-                    }
-                    controller.close();
-                } catch (err: any) {
-                    controller.error(err);
-                }
-            },
-        });
-
-        return new Response(stream);
     } catch (e: any) {
+        console.error('Analysis Error:', e);
         return new Response(`Analysis failed: ${e.message}`, { status: 500 });
     }
 }

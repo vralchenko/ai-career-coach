@@ -81,7 +81,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append('resume', file);
     formData.append('jobUrl', jobUrl);
-    formData.append('lang', lang);
+    formData.append('language', lang);
 
     try {
       const res = await fetch('/api/analyze', {
@@ -89,19 +89,42 @@ export default function Home() {
         body: formData
       });
 
+      if (!res.ok) throw new Error('Failed to start analysis');
+
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let fullText = '';
+      let buffer = '';
 
       if (reader) {
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
-          const chunk = decoder.decode(value);
-          fullText += chunk;
-          setReport(fullText);
-          if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
+
+            if (trimmedLine.startsWith('data: ')) {
+              try {
+                const jsonString = trimmedLine.replace('data: ', '');
+                const data = JSON.parse(jsonString);
+                const content = data.choices[0]?.delta?.content || "";
+
+                fullText += content;
+                setReport(fullText);
+
+                if (scrollRef.current) {
+                  scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                }
+              } catch (e) {
+                console.warn("Incomplete JSON chunk detected", e);
+              }
+            }
           }
         }
 
