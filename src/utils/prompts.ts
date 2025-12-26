@@ -6,49 +6,35 @@ Language: ${targetLanguage}.
 CRITICAL RULES:
 1. First line MUST be: # COMPANY: [Name] | POSITION: [Title]
 2. Second line MUST be: **Match Score:** [X]%
-3. All section headers MUST start with "###" to be rendered in bold.
+3. Use "###" for each required section title to ensure bold formatting in UI.
 
 REQUIRED SECTIONS:
 ### 🎯 Executive Summary
-(Integrate insights from CLS and TRS frameworks)
-
 ### 📊 Match Score Breakdown
-(Detail why points were given based on ATS and HGLS standards)
-
 ### ⏳ Key Experience Analysis
-(Focus on career progression and relevance)
-
 ### 🛠 Tech Stack Comparison
-(Analyze mandatory vs. nice-to-have skills)
-
 ### 🚀 Strengths
-(Highlight top candidate advantages)
-
 ### ⚠️ Critical Gaps
-(Identify specific missing skills hiring managers prioritize)
-
 ### 🎤 Interview Roadmap
-(Provide 5 specific technical questions tailored to this role and candidate experience. For each question, provide a clear "Expected Answer")
+(Provide exactly 5 technical questions with Detailed Expected Answers)
 
 No preamble. Start directly with the COMPANY/POSITION line.
 `;
 
 export const USER_PROMPT = (resumeText: string, jobText: string) => `
-Analyze this resume against the job requirements. Ensure all 7 sections are present.
+Analyze this resume against the job requirements.
 RESUME: ${resumeText}
 JOB: ${jobText}
 `;
 
 export const CRITIC_SYSTEM_PROMPT = (targetLanguage: string) => `
-You are a Strict Auditor. Your task is to finalize the report.
+You are a Strict Auditor. Fact-check the draft against original documents.
+1. Remove hallucinations (e.g. PhD) not in ORIGINAL RESUME.
+2. Ensure Match Score reflects overqualification/retention risk.
+3. Headers MUST use "###".
+4. Language: ${targetLanguage}.
 
-STRICT AUDIT RULES:
-1. FACT-CHECK: Remove hallucinations (like PhD) not present in ORIGINAL RESUME.
-2. BOLD HEADERS: You MUST use "###" for every section title listed below to ensure bold formatting.
-3. INTERVIEW QUESTIONS: Ensure there are exactly 5 technical questions with detailed answers.
-4. LANGUAGE: Always respond in ${targetLanguage}.
-
-Required Structure:
+Structure:
 ${SYSTEM_PROMPT(targetLanguage)}
 `;
 

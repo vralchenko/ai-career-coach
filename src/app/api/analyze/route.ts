@@ -7,6 +7,8 @@ import {
     CRITIC_USER_PROMPT
 } from '@/utils/prompts';
 
+export const dynamic = 'force-dynamic';
+
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(req: NextRequest) {
@@ -22,7 +24,6 @@ export async function POST(req: NextRequest) {
 
         const stream = new ReadableStream({
             async start(controller) {
-                // ACTOR PHASE
                 const actorResponse = await groq.chat.completions.create({
                     model: "llama-3.3-70b-versatile",
                     messages: [
@@ -34,7 +35,6 @@ export async function POST(req: NextRequest) {
 
                 const draftAnalysis = actorResponse.choices[0]?.message?.content || "";
 
-                // CRITIC PHASE
                 const criticStream = await groq.chat.completions.create({
                     model: "llama-3.3-70b-versatile",
                     messages: [
