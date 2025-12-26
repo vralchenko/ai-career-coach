@@ -20,7 +20,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -156,7 +156,7 @@ export default function Home() {
         {copied && (
             <div className="fixed top-4 lg:top-24 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
               <CheckCircle size={14} />
-              <span className="text-[10px] lg:text-xs font-bold uppercase">{t.copied}</span>
+              <span className="text-[10px] lg:text-xs font-black uppercase">{t.copied}</span>
             </div>
         )}
 
@@ -209,6 +209,7 @@ export default function Home() {
             <OutputArea
                 report={report}
                 loading={loading}
+                pdfLoading={pdfLoading}
                 scrollRef={scrollRef}
                 onCopy={handleCopy}
                 onDownloadPdf={handleDownloadPdf}

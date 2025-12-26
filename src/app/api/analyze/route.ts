@@ -1,67 +1,73 @@
-import puppeteer from 'puppeteer';
-import { SYSTEM_PROMPT, USER_PROMPT } from '@/lib/prompts';
-import pdf from 'pdf-parse-fork';
+import { NextRequest } from 'next/server';
+import Groq from 'groq-sdk';
+import {
+    SYSTEM_PROMPT,
+    USER_PROMPT,
+    CRITIC_SYSTEM_PROMPT,
+    CRITIC_USER_PROMPT
+} from '@/utils/prompts';
 
-export async function POST(req: Request) {
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
-        const file = formData.get('resume') as File;
-        const jobUrl = formData.get('jobUrl') as string;
-        const targetLanguage = (formData.get('language') as string) || 'en';
+        const resumeText = formData.get('resume') as string;
+        const jobDescription = formData.get('jobUrl') as string;
+        const language = formData.get('language') as string || 'en';
 
-        if (!file || !jobUrl) return new Response('Missing data', { status: 400 });
+        if (!resumeText || !jobDescription) {
+            return new Response(JSON.stringify({ error: 'Missing content' }), { status: 400 });
+        }
 
-        const arrayBuffer = await file.arrayBuffer();
-        const resumeData = await pdf(Buffer.from(arrayBuffer));
+        const stream = new ReadableStream({
+            async start(controller) {
+                // ACTOR PHASE
+                const actorResponse = await groq.chat.completions.create({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [
+                        { role: "system", content: SYSTEM_PROMPT(language) },
+                        { role: "user", content: USER_PROMPT(resumeText, jobDescription) }
+                    ],
+                    temperature: 0.3,
+                });
 
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--single-process',
-                '--no-zygote'
-            ],
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+                const draftAnalysis = actorResponse.choices[0]?.message?.content || "";
+
+                // CRITIC PHASE
+                const criticStream = await groq.chat.completions.create({
+                    model: "llama-3.3-70b-versatile",
+                    messages: [
+                        { role: "system", content: CRITIC_SYSTEM_PROMPT(language) },
+                        { role: "user", content: CRITIC_USER_PROMPT(resumeText, jobDescription, draftAnalysis) }
+                    ],
+                    temperature: 0.1,
+                    stream: true,
+                });
+
+                for await (const chunk of criticStream) {
+                    const content = chunk.choices[0]?.delta?.content || "";
+                    if (content) {
+                        const payload = { choices: [{ delta: { content } }] };
+                        controller.enqueue(`data: ${JSON.stringify(payload)}\n\n`);
+                    }
+                }
+
+                controller.enqueue("data: [DONE]\n\n");
+                controller.close();
+            },
         });
 
-        try {
-            const page = await browser.newPage();
-            await page.setUserAgent(
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                { architecture: 'x86', mobile: false, model: '', platform: 'Windows', platformVersion: '10.0.0' }
-            );
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+            },
+        });
 
-            await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
-            const jobText = await page.evaluate(() => document.body.innerText);
-            await browser.close();
-
-            const response = await fetch(process.env.GROQ_API_URL || "https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    model: process.env.OLLAMA_MODEL || "llama-3.1-8b-instant",
-                    messages: [
-                        { role: 'system', content: SYSTEM_PROMPT(targetLanguage) },
-                        { role: 'user', content: USER_PROMPT(resumeData.text, jobText) }
-                    ],
-                    stream: true,
-                })
-            });
-
-            if (!response.ok) return new Response('AI Service Error', { status: 500 });
-            return new Response(response.body);
-
-        } catch (innerError: any) {
-            if (browser) await browser.close();
-            return new Response(`Browser error: ${innerError.message}`, { status: 500 });
-        }
-    } catch (e: any) {
-        console.error('Analysis Error:', e);
-        return new Response(`Analysis failed: ${e.message}`, { status: 500 });
+    } catch (error) {
+        console.error('Analysis Error:', error);
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
     }
 }

@@ -1,29 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Clock, ExternalLink, X } from 'lucide-react';
-
-interface HistoryItem {
-    id: number;
-    date: string;
-    title: string;
-    url: string;
-    report: string;
-}
+import { useState, useEffect } from 'react';
+import { History, Trash2, ExternalLink, Clock, X } from 'lucide-react';
+import { ConfirmModal } from './ConfirmModal';
 
 interface SidebarProps {
-    onSelect: (report: string, url: string) => void;
     t: any;
+    onSelect: (report: string, url: string) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onSelect, t }) => {
-    const [history, setHistory] = useState<HistoryItem[]>([]);
+export function Sidebar({ t, onSelect }: SidebarProps) {
+    const [history, setHistory] = useState<any[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const loadHistory = () => {
-        const saved = localStorage.getItem('analysis_history');
-        if (saved) {
-            setHistory(JSON.parse(saved));
-        }
+        const data = JSON.parse(localStorage.getItem('analysis_history') || '[]');
+        setHistory(data);
     };
 
     useEffect(() => {
@@ -32,6 +24,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelect, t }) => {
         return () => window.removeEventListener('history_updated', loadHistory);
     }, []);
 
+    const handleClearAll = () => {
+        localStorage.removeItem('analysis_history');
+        setHistory([]);
+    };
+
     const deleteItem = (e: React.MouseEvent, id: number) => {
         e.stopPropagation();
         const updated = history.filter(item => item.id !== id);
@@ -39,63 +36,71 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelect, t }) => {
         setHistory(updated);
     };
 
-    const clearHistory = () => {
-        localStorage.removeItem('analysis_history');
-        setHistory([]);
-    };
-
     return (
-        <aside className="w-72 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0d0d0f] flex flex-col h-full transition-colors">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                    <Clock size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">{t.history}</span>
-                </div>
-                {history.length > 0 && (
-                    <button
-                        onClick={clearHistory}
-                        className="text-[10px] font-bold text-red-500 hover:text-red-600 uppercase transition-colors"
-                    >
-                        {t.clear}
-                    </button>
-                )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2 custom-scrollbar">
-                {history.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-40 opacity-20 italic text-sm">
-                        {t.noHistory}
+        <>
+            <aside className="w-full sm:w-[320px] lg:w-[380px] h-full bg-white dark:bg-[#111114] border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-xl lg:shadow-none relative">
+                <div className="p-5 lg:p-7 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/30 dark:bg-white/5">
+                    <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
+                        <History size={20} />
+                        <h2 className="text-sm font-black uppercase tracking-[0.15em] leading-none">
+                            {t.historyTitle}
+                        </h2>
                     </div>
-                ) : (
-                    history.map((item) => (
-                        <div
-                            key={item.id}
-                            onClick={() => onSelect(item.report, item.url)}
-                            className="group relative p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#141417] hover:border-indigo-500 dark:hover:border-indigo-500 cursor-pointer transition-all hover:shadow-md"
+                    {history.length > 0 && (
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-[11px] font-black uppercase text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all border border-rose-100 dark:border-rose-500/20"
                         >
-                            <button
-                                onClick={(e) => deleteItem(e, item.id)}
-                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-white dark:bg-[#1e1e24] text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all border border-slate-200 dark:border-slate-700 shadow-sm z-10"
-                            >
-                                <X size={12} />
-                            </button>
+                            <Trash2 size={14} />
+                            {t.clearHistory}
+                        </button>
+                    )}
+                </div>
 
-                            <div className="pr-6">
-                                <span className="text-[10px] text-slate-400 block mb-1 font-medium">{item.date}</span>
-                                <h3 className="text-xs font-black text-slate-900 dark:text-white line-clamp-2 leading-tight uppercase tracking-tight mb-2">
-                                    {item.title}
-                                </h3>
-                                <div className="flex items-center gap-1.5 text-indigo-500 dark:text-indigo-400">
-                                    <ExternalLink size={10} />
-                                    <span className="text-[10px] font-bold truncate opacity-80">
-                    {item.url.replace('https://', '').split('/')[0]}
-                  </span>
+                <div className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-3 custom-scrollbar">
+                    {history.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-2 opacity-50">
+                            <Clock size={32} strokeWidth={1} />
+                            <p className="text-[10px] font-bold uppercase tracking-widest">{t.noHistory}</p>
+                        </div>
+                    ) : (
+                        history.map((item) => (
+                            <div
+                                key={item.id}
+                                onClick={() => onSelect(item.report, item.url)}
+                                className="group relative p-3 lg:p-4 rounded-xl lg:rounded-2xl bg-slate-50 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-all cursor-pointer shadow-xs"
+                            >
+                                <button
+                                    onClick={(e) => deleteItem(e, item.id)}
+                                    className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-rose-500 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white dark:bg-[#111114] rounded-full shadow-sm"
+                                >
+                                    <X size={14} />
+                                </button>
+
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{item.date}</span>
+                                    <h3 className="text-[11px] lg:text-xs font-black text-slate-900 dark:text-white leading-tight line-clamp-2 pr-6 uppercase tracking-tight">
+                                        {item.title}
+                                    </h3>
+                                    <div className="flex items-center gap-1.5 text-blue-500">
+                                        <ExternalLink size={12} />
+                                        <span className="text-[10px] font-medium truncate opacity-80">{item.url}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
-                )}
-            </div>
-        </aside>
+                        ))
+                    )}
+                </div>
+            </aside>
+
+            <ConfirmModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={handleClearAll}
+                title={t.clearHistoryTitle || "Clear History"}
+                message={t.clearHistoryMessage || "This will permanently delete all your analysis records. Are you sure?"}
+                t={t}
+            />
+        </>
     );
-};
+}
