@@ -15,6 +15,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState('');
   const [jobUrl, setJobUrl] = useState('');
   const [report, setReport] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,11 +71,12 @@ export default function Home() {
   };
 
   const handleStart = async () => {
-    if (!file || !jobUrl) return;
+    if (!resumeText || !jobUrl) return;
     setLoading(true);
     setReport('');
+
     const formData = new FormData();
-    formData.append('resume', file);
+    formData.append('resume', resumeText);
     formData.append('jobUrl', jobUrl);
     formData.append('language', lang);
 
@@ -199,6 +201,7 @@ export default function Home() {
             <InputSection
                 file={file}
                 setFile={setFile}
+                setResumeText={setResumeText}
                 jobUrl={jobUrl}
                 setJobUrl={setJobUrl}
                 loading={loading}
