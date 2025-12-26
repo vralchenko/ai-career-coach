@@ -21,12 +21,13 @@ export async function POST(req: Request) {
                     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
                     body { font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.6; }
                     h1 { color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 24px; font-weight: 900; }
-                    h2 { color: #4f46e5; margin-top: 20px; font-weight: 700; display: flex; align-items: center; }
+                    h2 { color: #4f46e5; margin-top: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
                     ul { margin-bottom: 16px; }
                     li { margin-bottom: 8px; position: relative; padding-left: 20px; }
                     li::before { content: "•"; color: #6366f1; position: absolute; left: 0; font-weight: bold; }
                     strong { color: #0f172a; font-weight: 700; }
                     p { margin-bottom: 12px; }
+                    .icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 8px; }
                 </style>
             </head>
             <body class="p-10 bg-white">
@@ -44,12 +45,19 @@ export async function POST(req: Request) {
             args: isDocker ? [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage'
+                '--disable-dev-shm-usage',
+                '--font-render-hinting=none'
             ] : []
         });
 
         const page = await browser.newPage();
-        await page.setContent(finalHtml, { waitUntil: 'networkidle0' });
+
+        await page.setContent(finalHtml, {
+            waitUntil: ['load', 'networkidle0', 'domcontentloaded'],
+            timeout: 30000
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         const pdfBuffer = await page.pdf({
             format: 'A4',
