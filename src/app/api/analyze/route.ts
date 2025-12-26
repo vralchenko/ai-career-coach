@@ -9,10 +9,15 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
 export async function POST(req: NextRequest) {
     try {
+        const apiKey = process.env.GROQ_API_KEY;
+        if (!apiKey) {
+            return new Response(JSON.stringify({ error: 'API Key is missing' }), { status: 500 });
+        }
+
+        const groq = new Groq({ apiKey });
+
         const formData = await req.formData();
         const resumeText = formData.get('resume') as string;
         const jobDescription = formData.get('jobUrl') as string;
