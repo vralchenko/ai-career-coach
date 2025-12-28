@@ -98,6 +98,7 @@ export default function Home() {
         a.download = metaMatch ? `${metaMatch[1]}_${metaMatch[2]}.pdf`.replace(/\s+/g, '_') : 'Analysis_Report.pdf';
         document.body.appendChild(a);
         a.click();
+        window.open(url, '_blank');
         window.URL.revokeObjectURL(url);
         a.remove();
       }
