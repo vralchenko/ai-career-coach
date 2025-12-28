@@ -9,6 +9,7 @@ import { Footer } from '@/components/Footer';
 import { useTranslation } from '@/hooks/useTranslation';
 import RobotIcon from '../components/RobotIcon';
 import { Sun, Moon, CheckCircle, Menu, X, AlertCircle, Coins } from 'lucide-react';
+import { supabase } from '@/utils/supabaseClient';
 
 export default function Home() {
   const { t, lang, setLang } = useTranslation();
@@ -23,16 +24,7 @@ export default function Home() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [sessionTokens, setSessionTokens] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        return parseInt(localStorage.getItem('total_tokens_used') || '0', 10);
-      } catch {
-        return 0;
-      }
-    }
-    return 0;
-  });
+  const [sessionTokens, setSessionTokens] = useState<number>(0);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -41,8 +33,42 @@ export default function Home() {
     return () => { document.body.style.overflow = 'auto'; };
   }, []);
 
+  // Load initial tokens from Supabase on mount
   useEffect(() => {
-    localStorage.setItem('total_tokens_used', sessionTokens.toString());
+    const loadInitialTokens = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('token_usage')
+          .select('total_tokens')
+          .eq('id', 'global')
+          .maybeSingle();
+        setSessionTokens(data?.total_tokens ?? 0);
+      } catch (error) {
+        // Silently ignore DB load errors (RLS or connectivity issues)
+      }
+    };
+    loadInitialTokens();
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      try {
+        const { error } = await supabase
+          .from('token_usage')
+          .upsert({
+            id: 'global',
+            total_tokens: sessionTokens,
+          });
+      } catch (error) {
+        // Silently ignore DB save errors (RLS or connectivity issues)
+      }
+    }, 1000);
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [sessionTokens]);
 
   const handleCopy = () => {

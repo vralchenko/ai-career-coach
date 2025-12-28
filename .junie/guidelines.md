@@ -1,3 +1,5 @@
+# 🚀 Project Master Guidelines
+
 ## ⚠️ Critical Constraints & Rules
 
 ### 1. Code Preservation & Refactoring
@@ -6,117 +8,55 @@
 - If a task is ambiguous, **ask for clarification** in "Ask Mode" before applying changes in "Code Mode".
 
 ### 2. Language & Localization
-- **English Only**: All code comments, JSDoc, console logs, and commit messages must be in English.
+- **English Only**: All code comments, JSDoc, console logs, and commit messages must be in **English ONLY**.
 - **No Russian comments**: If you find existing Russian comments, you may translate them to English, but never add new ones.
 - **UI Translations**: Maintain the existing i18n structure using the `t` prop and translation objects. Do not hardcode strings in components.
 
 ### 3. AI Architecture (Actor-Critic)
 - Always respect the **Actor-Critic pattern** established in `src/app/api/analyze/route.ts` and `src/utils/prompts.ts`.
-- The Critic stage must always verify the presence of the [USER_PHOTO_HERE] placeholder and exact contact details (e.g., email `vr@r-al.ch`).
+- The Critic stage must always verify the presence of the `[USER_PHOTO_HERE]` placeholder and exact contact details (e.g., email `vr@r-al.ch`).
 - **No Markdown Tables**: AI responses for Match Scores must use bullet points and headers only to ensure mobile responsiveness.
 
-### 4. Code Style
-- Maintain **Tailwind CSS 4** utility-first approach.
+### 4. Code Style & UI
+- Maintain **Tailwind CSS 4** utility-first approach (Oxide engine).
 - Use **Lucide React** for icons and follow the minimalist, dark-themed UI aesthetic.
+- Ensure `sessionTokens` are tracked and displayed in the Header in real-time.
 
-# Development Guidelines
+### 🚫 Build & Environment Restrictions
+- **No .NET/MSBuild**: This is a pure Node.js/Next.js project. Ignore all MSBuild or Solution file errors. Never attempt to use `dotnet build` or `msbuild`.
+- **Package Management**: Always use `npm` for installing dependencies and running scripts.
+- **Primary Scripts**:
+    - `npm ci`: Clean installation of dependencies.
+    - `npm run dev`: Local development.
+    - `npm run build`: Production builds.
+- **Fix all ts errors**: like 'throw' of exception caught locally.
 
-## Build/Configuration Instructions
+## 📊 Database & Logging (Supabase)
+- **Provider**: Supabase (PostgreSQL).
+- **Logging Table**: `analysis_logs`.
+- **Target Data**: Capture raw job text, raw resume text, final recommendations, token usage (actor/critic), and system metadata (browser/OS/date).
+- **Execution**: Database insertion must be asynchronous and must not block the main SSE stream.
+
+## ⚙️ Development Information
 
 ### Prerequisites
 - Node.js 20+
-- Groq API key from https://console.groq.com/keys
-
-### Local Development
-1. `npm ci`
-2. Copy `.env` and set `GROQ_API_KEY=your_key_here`
-   ```
-   GROQ_API_URL=https://api.groq.com/openai/v1/chat/completions
-   GROQ_API_KEY=...
-   OLLAMA_MODEL=llama3.1-8b-instruct  # optional, requires Ollama
-   ```
-3. `npm run dev` (localhost:3000)
-4. Build: `npm run build && npm start`
-
-### Docker Deployment
-Use Dockerfile. Env vars:
-- `PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable` (Render/etc.)
-- `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true`
-
-## Testing Information
-
-### Current Setup
-No unit/E2E tests or test runner configured.
-
-### Demo Simple Test
-File: `tests/simple.test.js`
-```js
-const assert = require('node:assert/strict');
-
-assert.strictEqual(1 + 1, 2);
-console.log('✅ All tests passed!');
-```
-Run:
-```bash
-node tests/simple.test.js
-```
-Output: `✅ All tests passed!`
-
-### Adding Unit Tests (Vitest recommended for Next.js 16+)
-1. Install:
-   ```bash
-   npm i -D vitest@latest jsdom@latest @testing-library/react @testing-library/jest-dom @vitest/ui happy-dom
-   ```
-2. `package.json` scripts:
-
-3. `vitest.config.ts`:
-   ```ts
-   import { defineConfig } from 'vitest/config'
-
-   export default defineConfig({
-     test: {
-       environment: 'happy-dom',  // or jsdom
-       include: ['**/*.{test,spec}.{ts,tsx}']
-     }
-   })
-   ```
-4. Example test `src/__tests__/Sidebar.test.tsx`:
-   ```tsx
-   import { render, screen } from '@testing-library/react'
-   // test code here
-   ```
-5. Run `npm test`
-
-### E2E Testing
-Puppeteer pre-installed for scraping. For full E2E:
-```bash
-npm i -D @playwright/test
-npx playwright install
-```
-Configure `playwright.config.ts`.
-
-## Additional Development Information
-
-### Code Style & Linting
-- ESLint 9 (flat config): `npm run lint`
-- Tailwind CSS 4 (Oxide engine): `@tailwindcss/postcss`
-- TypeScript 5, strict mode
+- Groq API key (configured in `.env`).
 
 ### Frameworks & Plugins
-- **React 19 + Compiler**: `babel-plugin-react-compiler` (optimizes without memos)
-- **Next.js 16 App Router**
-- **Dark Mode**: `next-themes`
-- **Icons**: `lucide-react`
-- **Markdown**: `react-markdown` + `remark-gfm`
+- **React 19 + Compiler**: `babel-plugin-react-compiler`.
+- **Next.js 16 App Router**.
+- **Dark Mode**: `next-themes`.
+- **Markdown**: `react-markdown` + `remark-gfm`.
 
 ### Key Implementation Details
-- **Analysis**: URL scrape (Puppeteer) → Resume parse (pdfjs-dist) → AI (Groq/Ollama) → SSE
-- **Prompts**: `src/utils/prompts.ts`
-- **History**: localStorage, custom events
-- **Export**: `html-to-image` + `jsPDF`
-- **i18n**: Manual `t` prop (translation objects)
+- **Analysis**: URL scrape (Puppeteer) → Resume parse (pdfjs-dist) → AI (Groq/Ollama) → SSE.
+- **History**: `localStorage` with custom event synchronization.
+- **Export**: `html-to-image` + `jsPDF` for resume generation.
+
+### Testing Status
+- **Current Setup**: No unit/E2E test runner is currently active. Avoid adding complex test suites unless requested.
 
 ### Debugging Tips
-- Puppeteer: `headless: false`
-- Ollama: `ollama serve & ollama pull llama3.1-8b-instruct`
-- Logs: console in dev
+- Puppeteer: Set `headless: false` for visual debugging.
+- Logs: Use standard English `console.log` for server-side and client-side debugging.
