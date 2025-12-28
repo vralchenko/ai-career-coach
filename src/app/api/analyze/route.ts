@@ -11,6 +11,7 @@ import {
 
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/utils/supabaseClient';
+import geoip from 'fast-geoip';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,8 +79,9 @@ export async function POST(req: NextRequest) {
         const userAgent = req.headers.get('user-agent') || 'unknown';
         const forwarded = req.headers.get('x-forwarded-for');
         const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
-        const country = req.headers.get('x-vercel-ip-country') || 'Unknown';
-        const city = req.headers.get('x-vercel-ip-city') || 'Unknown';
+        const geo = await geoip.lookup(ip);
+        const country = geo?.country || 'Unknown';
+        const city = geo?.city || 'Unknown';
         const sessionId = crypto.randomUUID();
         const model = process.env.AI_MODEL_NAME || 'llama-3.3-70b-versatile';
         const jobDescription = await getJobDescription(jobInput);
