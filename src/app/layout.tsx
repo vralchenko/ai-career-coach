@@ -24,10 +24,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
         >
-            <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#0a0a0c]">
-                <main className="flex-grow pb-24">
+            <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#0a0a0c] overflow-hidden">
+                <div className="flex-grow overflow-hidden">
                     {children}
-                </main>
+                </div>
                 <Footer />
             </div>
         </ThemeProvider>
