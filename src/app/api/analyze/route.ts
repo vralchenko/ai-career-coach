@@ -53,6 +53,14 @@ function parseUserAgent(raw: string) {
   return { browser, os, device, raw };
 }
 
+// Helper to clean PDF-extracted resume text: collapse multiple spaces, join spaced single uppercase letters (e.g., "S E N I O R" -> "SENIOR"), trim
+function cleanResumeText(text: string): string {
+  return text
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/(?<=[A-Z])\\s(?=[A-Z]\\s|[A-Z]$)/g, '')
+    .trim();
+}
+
 export async function POST(req: NextRequest) {
     try {
         const apiKey = process.env.GROQ_API_KEY;
@@ -60,6 +68,7 @@ export async function POST(req: NextRequest) {
         const groq = new Groq({ apiKey });
         const formData = await req.formData();
         const resumeText = formData.get('resume') as string;
+        const cleanedResumeText = cleanResumeText(resumeText);
         const jobInput = formData.get('jobUrl') as string;
         const language = formData.get('language') as string || 'en';
         const userAgent = req.headers.get('user-agent') || 'unknown';
@@ -71,7 +80,7 @@ export async function POST(req: NextRequest) {
                 try {
                     const actorResponse = await groq.chat.completions.create({
                         model,
-                        messages: [{ role: "system", content: SYSTEM_PROMPT(language) }, { role: "user", content: USER_PROMPT(resumeText, jobDescription) }],
+                        messages: [{ role: "system", content: SYSTEM_PROMPT(language) }, { role: "user", content: USER_PROMPT(cleanedResumeText, jobDescription) }],
                         temperature: 0.3,
                     });
                     const draftAnalysis = actorResponse.choices[0]?.message?.content || "";
@@ -79,7 +88,7 @@ export async function POST(req: NextRequest) {
                     controller.enqueue(`data: ${JSON.stringify({ tokens: { actor: actorTokens } })}\\n\\n`);
                     const criticStream = await groq.chat.completions.create({
                         model,
-                        messages: [{ role: "system", content: CRITIC_SYSTEM_PROMPT(language) }, { role: "user", content: CRITIC_USER_PROMPT(resumeText, jobDescription, draftAnalysis) }],
+                        messages: [{ role: "system", content: CRITIC_SYSTEM_PROMPT(language) }, { role: "user", content: CRITIC_USER_PROMPT(cleanedResumeText, jobDescription, draftAnalysis) }],
                         temperature: 0.1,
                         stream: true,
                     });
@@ -92,30 +101,32 @@ export async function POST(req: NextRequest) {
                     // Fetch critic usage separately for accurate token count (English comment per guidelines)
                     const criticResponse = await groq.chat.completions.create({
                       model,
-                      messages: [{ role: "system", content: CRITIC_SYSTEM_PROMPT(language) }, { role: "user", content: CRITIC_USER_PROMPT(resumeText, jobDescription, draftAnalysis) }],
+                      messages: [{ role: "system", content: CRITIC_SYSTEM_PROMPT(language) }, { role: "user", content: CRITIC_USER_PROMPT(cleanedResumeText, jobDescription, draftAnalysis) }],
                       temperature: 0.1,
                     });
                     const criticTokens = criticResponse.usage?.total_tokens ?? 0;
                     const totalTokens = actorTokens + criticTokens;
                     // Log analysis metadata to Supabase (non-blocking for user response)
-                    const criticContent = criticResponse.choices[0]?.message?.content || '';
-                    const logData = {
-                      job_url: jobInput,
-                      job_raw_text: jobDescription,
-                      resume_raw_text: resumeText,
-                      recommendations: criticContent,
-                      tokens_actor: actorTokens,
-                      tokens_critic: criticTokens,
-                      tokens_total: totalTokens,
-                      api_provider: 'Groq',
-                      api_model: model,
-                      user_agent: parseUserAgent(userAgent),
-                      session_id: sessionId,
-                    };
-                    const { error } = await supabaseAdmin.from('analysis_logs').insert([logData]);
-                    if (error) {
-                      console.error('Failed to log analysis to DB:', error);
-                    }
+    if (supabaseAdmin) {
+      const criticContent = criticResponse.choices[0]?.message?.content || '';
+      const logData = {
+        job_url: jobInput,
+        job_raw_text: jobDescription,
+        resume_raw_text: cleanedResumeText,
+        recommendations: criticContent,
+        tokens_actor: actorTokens,
+        tokens_critic: criticTokens,
+        tokens_total: totalTokens,
+        api_provider: 'Groq',
+        api_model: model,
+        user_agent: parseUserAgent(userAgent),
+        session_id: sessionId,
+      };
+      const { error } = await supabaseAdmin.from('analysis_logs').insert([logData]);
+      if (error) {
+        console.error('Failed to log analysis to DB:', error);
+      }
+    }
                     controller.enqueue(`data: ${JSON.stringify({ tokens: { actor: actorTokens, critic: criticTokens, total: totalTokens } })}\n\n`);
                     controller.enqueue("data: [DONE]\n\n");
                     controller.close();

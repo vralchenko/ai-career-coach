@@ -31,7 +31,12 @@ export function InputSection({ file, setFile, setResumeText, jobUrl, setJobUrl, 
                     const strings = content.items.map((item: any) => item.str);
                     fullText += strings.join(' ') + '\n';
                 }
-                setResumeText(fullText);
+                // Clean extracted PDF text: collapse multiple whitespace and join spaced uppercase acronyms (e.g., "S E N I O R" -> "SENIOR")
+                const cleanedText = fullText
+                    .replace(/\\s+/g, ' ')
+                    .replace(/(?<=[A-Z])\\s(?=[A-Z])/g, '')
+                    .trim();
+                setResumeText(cleanedText);
             } catch (error) { setResumeText(''); }
         } else { setResumeText(''); }
     };
