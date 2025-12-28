@@ -43,3 +43,11 @@ ORIGINAL RESUME: ${resume}
 ORIGINAL JOB: ${job}
 DRAFT TO REFINE: ${draft}
 `;
+
+export const CLEANUP_PROMPT = `STEP 1: Identify the Contact Information section (Email, LinkedIn, GitHub, Portfolio).
+
+STEP 2: For Emails and URLs, remove ALL internal spaces. CRITICAL: Do NOT add or insert any new characters like dots (.) or dashes (-) that were not present in the character sequence. For example, if you see 'v r a l c h e n k o @ g m a i l . c o m', join it as 'vralchenko@gmail.com', not 'vr.alchenko'.
+
+STEP 3: For the rest of the text, restore standard word spacing and sentence structure.
+
+Output ONLY the cleaned resume text.`;

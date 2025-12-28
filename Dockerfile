@@ -55,8 +55,20 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
 COPY package*.json ./
 RUN npm install
+
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG GROQ_API_KEY
+ARG GROQ_API_URL
+
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV GROQ_API_KEY=$GROQ_API_KEY
+ENV GROQ_API_URL=$GROQ_API_URL
+
 COPY . .
 RUN npm run build
 

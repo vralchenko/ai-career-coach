@@ -5,7 +5,8 @@ import {
     SYSTEM_PROMPT,
     USER_PROMPT,
     CRITIC_SYSTEM_PROMPT,
-    CRITIC_USER_PROMPT
+    CRITIC_USER_PROMPT,
+    CLEANUP_PROMPT
 } from '@/utils/prompts';
 
 import crypto from 'crypto';
@@ -53,13 +54,8 @@ function parseUserAgent(raw: string) {
   return { browser, os, device, raw };
 }
 
-// Helper to clean PDF-extracted resume text: collapse multiple spaces, join spaced single uppercase letters (e.g., "S E N I O R" -> "SENIOR"), trim
-function cleanResumeText(text: string): string {
-  return text
-    .replace(/[ ]{2,}/g, ' ')
-    .replace(/(?<=[A-Z])\\s(?=[A-Z]\\s|[A-Z]$)/g, '')
-    .trim();
-}
+
+
 
 export async function POST(req: NextRequest) {
     try {
@@ -68,7 +64,17 @@ export async function POST(req: NextRequest) {
         const groq = new Groq({ apiKey });
         const formData = await req.formData();
         const resumeText = formData.get('resume') as string;
-        const cleanedResumeText = cleanResumeText(resumeText);
+        const superCleanedText = resumeText; // Use raw text for AI space restoration
+        const cleanupModel = 'llama-3.1-8b-instant';
+        const cleanupResponse = await groq.chat.completions.create({
+            model: cleanupModel,
+            messages: [
+                { role: "system", content: CLEANUP_PROMPT },
+                { role: "user", content: superCleanedText },
+            ],
+            temperature: 0.0,
+        });
+        const cleanedResumeText = cleanupResponse.choices[0]?.message?.content?.trim() || resumeText;
         const jobInput = formData.get('jobUrl') as string;
         const language = formData.get('language') as string || 'en';
         const userAgent = req.headers.get('user-agent') || 'unknown';
