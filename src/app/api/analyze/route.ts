@@ -50,6 +50,8 @@ export async function POST(req: NextRequest) {
                         temperature: 0.3,
                     });
                     const draftAnalysis = actorResponse.choices[0]?.message?.content || "";
+                    const actorTokens = actorResponse.usage?.total_tokens ?? 0;
+                    controller.enqueue(`data: ${JSON.stringify({ tokens: { actor: actorTokens } })}\\n\\n`);
                     const criticStream = await groq.chat.completions.create({
                         model: "llama-3.3-70b-versatile",
                         messages: [{ role: "system", content: CRITIC_SYSTEM_PROMPT(language) }, { role: "user", content: CRITIC_USER_PROMPT(resumeText, jobDescription, draftAnalysis) }],
@@ -62,6 +64,15 @@ export async function POST(req: NextRequest) {
                             controller.enqueue(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`);
                         }
                     }
+                    // Fetch critic usage separately for accurate token count (English comment per guidelines)
+                    const criticResponse = await groq.chat.completions.create({
+                      model: "llama-3.3-70b-versatile",
+                      messages: [{ role: "system", content: CRITIC_SYSTEM_PROMPT(language) }, { role: "user", content: CRITIC_USER_PROMPT(resumeText, jobDescription, draftAnalysis) }],
+                      temperature: 0.1,
+                    });
+                    const criticTokens = criticResponse.usage?.total_tokens ?? 0;
+                    const totalTokens = actorTokens + criticTokens;
+                    controller.enqueue(`data: ${JSON.stringify({ tokens: { actor: actorTokens, critic: criticTokens, total: totalTokens } })}\n\n`);
                     controller.enqueue("data: [DONE]\n\n");
                     controller.close();
                 } catch (e: any) { controller.error(e); }

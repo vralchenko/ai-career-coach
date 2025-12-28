@@ -8,7 +8,7 @@ import { OutputArea } from '@/components/OutputArea';
 import { Footer } from '@/components/Footer';
 import { useTranslation } from '@/hooks/useTranslation';
 import RobotIcon from '../components/RobotIcon';
-import { Sun, Moon, CheckCircle, Menu, X, AlertCircle } from 'lucide-react';
+import { Sun, Moon, CheckCircle, Menu, X, AlertCircle, Coins } from 'lucide-react';
 
 export default function Home() {
   const { t, lang, setLang } = useTranslation();
@@ -23,6 +23,16 @@ export default function Home() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sessionTokens, setSessionTokens] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return parseInt(localStorage.getItem('total_tokens_used') || '0', 10);
+      } catch {
+        return 0;
+      }
+    }
+    return 0;
+  });
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -30,6 +40,10 @@ export default function Home() {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'auto'; };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('total_tokens_used', sessionTokens.toString());
+  }, [sessionTokens]);
 
   const handleCopy = () => {
     if (!report) return;
@@ -67,6 +81,7 @@ export default function Home() {
   const handleStart = async () => {
     if (!resumeText || !jobUrl) return;
     setLoading(true);
+    const startTokens = sessionTokens;
     setReport('');
     setErrorMessage(null);
 
@@ -102,9 +117,18 @@ export default function Home() {
                   const content = data.choices[0].delta.content;
                   fullText += content;
                   setReport(fullText);
+                  setSessionTokens((prev) => prev + Math.ceil(content.length / 4));
                   if (scrollRef.current) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                   }
+                } else if (data.tokens) {
+                  let delta = 0;
+                  if (data.tokens.total !== undefined) {
+                    delta = data.tokens.total;
+                  } else if (data.tokens.actor !== undefined) {
+                    delta = data.tokens.actor;
+                  }
+                  setSessionTokens(startTokens + delta);
                 }
               } catch (e) {}
             }
@@ -155,6 +179,12 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <button onClick={() => setIsSidebarOpen(true)} className="p-1 lg:hidden text-slate-600 dark:text-slate-400"><Menu size={16} /></button>
                   <h1 className="text-[11px] lg:text-[13px] font-black uppercase tracking-tight">{t.brandName}</h1>
+                  {sessionTokens > 0 && (
+                    <span className="ml-2 flex items-center gap-1.5 text-[10px] lg:text-xs font-semibold tracking-tight text-slate-500 dark:text-slate-400">
+                      <Coins className="w-3 h-3 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                      <span>{sessionTokens.toLocaleString()} used</span>
+                    </span>
+                  )}
                   {loading && <RobotIcon className="w-4 h-4 animate-spin text-indigo-500" />}
                 </div>
                 <div className="flex items-center gap-1.5">
