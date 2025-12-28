@@ -219,7 +219,7 @@ export default function Home() {
                     {theme === 'dark' ? <Sun size={12} /> : <Moon size={12} />}
                   </button>
                   <select value={lang} onChange={(e) => setLang(e.target.value)} className="bg-slate-100 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded-lg text-[9px] font-black uppercase outline-none cursor-pointer">
-                    {['en', 'de', 'es', 'ru', 'uk'].map(l => (<option key={l} value={l}>{l.toUpperCase()}</option>))}
+                    {['en', 'de', 'es', 'ru', 'uk'].map(l => (<option key={l} value={l}>{l === 'uk' ? 'UA' : l.toUpperCase()}</option>))}
                   </select>
                 </div>
               </header>
