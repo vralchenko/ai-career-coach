@@ -38,10 +38,10 @@ async function getJobDescription(url: string): Promise<string> {
 function parseUserAgent(raw: string) {
   const ua = raw.toLowerCase();
   let browser = 'Unknown';
-  if (ua.includes('chrome')) browser = 'Chrome';
+  if (ua.includes('edg') || ua.includes('edge')) browser = 'Edge';
+  else if (ua.includes('chrome')) browser = 'Chrome';
   else if (ua.includes('firefox')) browser = 'Firefox';
   else if (ua.includes('safari')) browser = 'Safari';
-  else if (ua.includes('edg') || ua.includes('edge')) browser = 'Edge';
   let os = 'Unknown';
   if (ua.includes('win')) os = 'Windows';
   else if (ua.includes('mac')) os = 'macOS';
@@ -76,6 +76,10 @@ export async function POST(req: NextRequest) {
         const jobInput = formData.get('jobUrl') as string;
         const language = formData.get('language') as string || 'en';
         const userAgent = req.headers.get('user-agent') || 'unknown';
+        const forwarded = req.headers.get('x-forwarded-for');
+        const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+        const country = req.headers.get('x-vercel-ip-country') || 'Unknown';
+        const city = req.headers.get('x-vercel-ip-city') || 'Unknown';
         const sessionId = crypto.randomUUID();
         const model = process.env.AI_MODEL_NAME || 'llama-3.3-70b-versatile';
         const jobDescription = await getJobDescription(jobInput);
@@ -121,7 +125,12 @@ export async function POST(req: NextRequest) {
                         tokens_total: totalTokens,
                         api_provider: 'Groq',
                         api_model: model,
-                        user_agent: parseUserAgent(userAgent),
+                        ip_address: ip,
+                        user_agent: {
+                          ...parseUserAgent(userAgent),
+                          country,
+                          city,
+                        },
                         session_id: sessionId,
                       };
                       const { error } = await supabaseAdmin.from('analysis_logs').insert([logData]);
