@@ -29,7 +29,10 @@ Create a `.env` file in the root directory:
 ```env
 GROQ_API_URL=https://api.groq.com/openai/v1/chat/completions
 GROQ_API_KEY=your_key_here
-OLLAMA_MODEL=llama3.1-8b-instruct  # optional, requires Ollama
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here  # Server-side logging (Supabase Settings > API > service_role)
+AI_MODEL_NAME=llama-3.3-70b-versatile  # default Groq model
 ```
 
 ### Local Development
@@ -45,8 +48,72 @@ OLLAMA_MODEL=llama3.1-8b-instruct  # optional, requires Ollama
 
 **Environment Variables**
     - `GROQ_API_KEY`: Your production API key
+    - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anon key
+    - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (Settings > API > service_role)
     - `PUPPETEER_EXECUTABLE_PATH`: `/usr/bin/google-chrome-stable`
     - `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD`: `true`
+
+## 🗄️ Supabase Setup
+
+### Prerequisites
+- Create free project at [supabase.com/dashboard](https://supabase.com/dashboard)
+
+### 1. Create Table `token_usage`
+Run in SQL Editor:
+```sql
+CREATE TABLE IF NOT EXISTS token_usage (
+  id text PRIMARY KEY DEFAULT 'global',
+  total_tokens bigint DEFAULT 0,
+  updated_at timestamptz DEFAULT now()
+);
+```
+
+### 2. Row Level Security (RLS)
+- Enable RLS on table `token_usage`.
+- Create policies for anon/public (demo only):
+  | Operation | Expression | Roles |
+  |-----------|------------|-------|
+  | SELECT    | `true`     | anon  |
+  | INSERT    | `true`     | anon  |
+  | UPDATE    | `true`     | anon  |
+
+**Production**: Use `auth.uid()::text = id` after adding auth.
+
+### 3. Copy Env Vars
+From project Settings > API:
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+## 📊 Analysis Logs DB Setup
+
+### Create Table `analysis_logs`
+
+Run in SQL Editor:
+
+```sql
+CREATE TABLE IF NOT EXISTS analysis_logs (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at timestamptz DEFAULT now(),
+  job_url text,
+  job_raw_text text,
+  resume_raw_text text,
+  recommendations text,
+  tokens_actor integer DEFAULT 0,
+  tokens_critic integer DEFAULT 0,
+  tokens_total integer DEFAULT 0,
+  api_provider text DEFAULT 'Groq',
+  api_model text,
+  user_agent jsonb,
+  session_id text
+);
+```
+
+### RLS (Optional)
+
+Service role bypasses RLS. Enable RLS on the table if additional security is needed.
 
 ## Project Structure
 

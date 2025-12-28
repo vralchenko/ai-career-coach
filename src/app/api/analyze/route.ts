@@ -8,6 +8,9 @@ import {
     CRITIC_USER_PROMPT
 } from '@/utils/prompts';
 
+import crypto from 'crypto';
+import { supabaseAdmin } from '@/utils/supabaseClient';
+
 export const dynamic = 'force-dynamic';
 
 async function getJobDescription(url: string): Promise<string> {
@@ -31,6 +34,25 @@ async function getJobDescription(url: string): Promise<string> {
     } catch (error) { return url; } finally { await browser.close(); }
 }
 
+function parseUserAgent(raw: string) {
+  const ua = raw.toLowerCase();
+  let browser = 'Unknown';
+  if (ua.includes('chrome')) browser = 'Chrome';
+  else if (ua.includes('firefox')) browser = 'Firefox';
+  else if (ua.includes('safari')) browser = 'Safari';
+  else if (ua.includes('edg') || ua.includes('edge')) browser = 'Edge';
+  let os = 'Unknown';
+  if (ua.includes('win')) os = 'Windows';
+  else if (ua.includes('mac')) os = 'macOS';
+  else if (ua.includes('linux')) os = 'Linux';
+  else if (ua.includes('android')) os = 'Android';
+  else if (ua.includes('ios') || ua.includes('iphone') || ua.includes('ipad')) os = 'iOS';
+  let device = 'Desktop';
+  if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) device = 'Mobile';
+  else if (ua.includes('ipad') || ua.includes('tablet')) device = 'Tablet';
+  return { browser, os, device, raw };
+}
+
 export async function POST(req: NextRequest) {
     try {
         const apiKey = process.env.GROQ_API_KEY;
@@ -40,12 +62,15 @@ export async function POST(req: NextRequest) {
         const resumeText = formData.get('resume') as string;
         const jobInput = formData.get('jobUrl') as string;
         const language = formData.get('language') as string || 'en';
+        const userAgent = req.headers.get('user-agent') || 'unknown';
+        const sessionId = crypto.randomUUID();
+        const model = process.env.AI_MODEL_NAME || 'llama-3.3-70b-versatile';
         const jobDescription = await getJobDescription(jobInput);
         const stream = new ReadableStream({
             async start(controller) {
                 try {
                     const actorResponse = await groq.chat.completions.create({
-                        model: "llama-3.3-70b-versatile",
+                        model,
                         messages: [{ role: "system", content: SYSTEM_PROMPT(language) }, { role: "user", content: USER_PROMPT(resumeText, jobDescription) }],
                         temperature: 0.3,
                     });
@@ -53,7 +78,7 @@ export async function POST(req: NextRequest) {
                     const actorTokens = actorResponse.usage?.total_tokens ?? 0;
                     controller.enqueue(`data: ${JSON.stringify({ tokens: { actor: actorTokens } })}\\n\\n`);
                     const criticStream = await groq.chat.completions.create({
-                        model: "llama-3.3-70b-versatile",
+                        model,
                         messages: [{ role: "system", content: CRITIC_SYSTEM_PROMPT(language) }, { role: "user", content: CRITIC_USER_PROMPT(resumeText, jobDescription, draftAnalysis) }],
                         temperature: 0.1,
                         stream: true,
@@ -66,12 +91,31 @@ export async function POST(req: NextRequest) {
                     }
                     // Fetch critic usage separately for accurate token count (English comment per guidelines)
                     const criticResponse = await groq.chat.completions.create({
-                      model: "llama-3.3-70b-versatile",
+                      model,
                       messages: [{ role: "system", content: CRITIC_SYSTEM_PROMPT(language) }, { role: "user", content: CRITIC_USER_PROMPT(resumeText, jobDescription, draftAnalysis) }],
                       temperature: 0.1,
                     });
                     const criticTokens = criticResponse.usage?.total_tokens ?? 0;
                     const totalTokens = actorTokens + criticTokens;
+                    // Log analysis metadata to Supabase (non-blocking for user response)
+                    const criticContent = criticResponse.choices[0]?.message?.content || '';
+                    const logData = {
+                      job_url: jobInput,
+                      job_raw_text: jobDescription,
+                      resume_raw_text: resumeText,
+                      recommendations: criticContent,
+                      tokens_actor: actorTokens,
+                      tokens_critic: criticTokens,
+                      tokens_total: totalTokens,
+                      api_provider: 'Groq',
+                      api_model: model,
+                      user_agent: parseUserAgent(userAgent),
+                      session_id: sessionId,
+                    };
+                    const { error } = await supabaseAdmin.from('analysis_logs').insert([logData]);
+                    if (error) {
+                      console.error('Failed to log analysis to DB:', error);
+                    }
                     controller.enqueue(`data: ${JSON.stringify({ tokens: { actor: actorTokens, critic: criticTokens, total: totalTokens } })}\n\n`);
                     controller.enqueue("data: [DONE]\n\n");
                     controller.close();
