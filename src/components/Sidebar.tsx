@@ -1,39 +1,60 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { History, Trash2, ExternalLink, Clock, X } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
+import { supabase } from '@/utils/supabaseClient';
+
+interface HistoryItem {
+    id: string | number;
+    date: string;
+    title: string;
+    url: string;
+    report: string;
+}
 
 interface SidebarProps {
     t: any;
+    history: HistoryItem[];
     onSelect: (report: string, url: string) => void;
+    onDelete: (id: string | number) => void;
+    onClear: () => void;
 }
 
-export function Sidebar({ t, onSelect }: SidebarProps) {
-    const [history, setHistory] = useState<any[]>([]);
+export function Sidebar({ t, history, onSelect, onDelete, onClear }: SidebarProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const loadHistory = () => {
-        const data = JSON.parse(localStorage.getItem('analysis_history') || '[]');
-        setHistory(data);
+    const handleClearAll = async () => {
+        try {
+            const { error } = await supabase
+                .from('analysis_logs')
+                .delete()
+                .filter('id', 'not.is', null);
+
+            if (!error) {
+                onClear();
+            }
+        } catch (error) {
+            console.error('Failed to clear history:', error);
+        } finally {
+            setIsModalOpen(false);
+        }
     };
 
-    useEffect(() => {
-        loadHistory();
-        window.addEventListener('history_updated', loadHistory);
-        return () => window.removeEventListener('history_updated', loadHistory);
-    }, []);
-
-    const handleClearAll = () => {
-        localStorage.removeItem('analysis_history');
-        setHistory([]);
-    };
-
-    const deleteItem = (e: React.MouseEvent, id: number) => {
+    const deleteItem = async (e: React.MouseEvent, id: string | number) => {
         e.stopPropagation();
-        const updated = history.filter(item => item.id !== id);
-        localStorage.setItem('analysis_history', JSON.stringify(updated));
-        setHistory(updated);
+        try {
+            const { error } = await supabase
+                .from('analysis_logs')
+                .delete()
+                .eq('id', id);
+
+            if (!error) {
+                onDelete(id);
+            }
+        } catch (error) {
+            console.error('Failed to delete item:', error);
+        }
     };
 
     return (
@@ -72,11 +93,10 @@ export function Sidebar({ t, onSelect }: SidebarProps) {
                             >
                                 <button
                                     onClick={(e) => deleteItem(e, item.id)}
-                                    className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-rose-500 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white dark:bg-[#111114] rounded-full shadow-sm"
+                                    className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-rose-500 lg:opacity-0 lg:group-hover:opacity-100 transition-all bg-white dark:bg-[#111114] rounded-full shadow-sm z-10"
                                 >
                                     <X size={14} />
                                 </button>
-
                                 <div className="flex flex-col gap-2">
                                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{item.date}</span>
                                     <h3 className="text-[11px] lg:text-xs font-black text-slate-900 dark:text-white leading-tight line-clamp-2 pr-6 uppercase tracking-tight">
@@ -92,13 +112,12 @@ export function Sidebar({ t, onSelect }: SidebarProps) {
                     )}
                 </div>
             </aside>
-
             <ConfirmModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={handleClearAll}
                 title={t.clearHistoryTitle || "Clear History"}
-                message={t.clearHistoryMessage || "This will permanently delete all your analysis records. Are you sure?"}
+                message={t.clearHistoryMessage || "This will permanently delete your records. Are you sure?"}
                 t={t}
             />
         </>

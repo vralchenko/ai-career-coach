@@ -25,6 +25,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionTokens, setSessionTokens] = useState<number>(0);
+  const [history, setHistory] = useState<any[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -33,43 +34,51 @@ export default function Home() {
     return () => { document.body.style.overflow = 'auto'; };
   }, []);
 
-  // Load initial tokens from Supabase on mount
-  useEffect(() => {
-    const loadInitialTokens = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('token_usage')
-          .select('total_tokens')
-          .eq('id', 'global')
-          .maybeSingle();
-        setSessionTokens(data?.total_tokens ?? 0);
-      } catch (error) {
-        // Silently ignore DB load errors (RLS or connectivity issues)
+  const fetchHistory = async () => {
+    try {
+      const { data, error } = await supabase
+          .from('analysis_logs')
+          .select('id, created_at, job_url, recommendations')
+          .neq('job_url', 'PDF_EXPORT')
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+      if (!error && data) {
+        const formattedHistory = data.map(item => {
+          let displayTitle = 'JOB ANALYSIS';
+          const reportText = item.recommendations || '';
+          const metaMatch = reportText.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
+
+          if (metaMatch) {
+            displayTitle = `${metaMatch[1]} | ${metaMatch[2]}`.toUpperCase();
+          } else if (item.job_url && item.job_url.startsWith('http')) {
+            displayTitle = item.job_url.split('?')[0].split('/').filter(Boolean).pop()?.toUpperCase() || 'LINKEDIN JOB';
+          }
+
+          return {
+            id: item.id,
+            date: new Date(item.created_at).toLocaleString(),
+            title: displayTitle,
+            url: item.job_url,
+            report: reportText
+          };
+        });
+        setHistory(formattedHistory);
       }
-    };
-    loadInitialTokens();
-  }, []);
+    } catch (error) {}
+  };
+
+  const handleDeleteHistory = (id: string | number) => {
+    setHistory(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleClearHistory = () => {
+    setHistory([]);
+  };
 
   useEffect(() => {
-    const timeoutId = setTimeout(async () => {
-      try {
-        const { error } = await supabase
-          .from('token_usage')
-          .upsert({
-            id: 'global',
-            total_tokens: sessionTokens,
-          });
-      } catch (error) {
-        // Silently ignore DB save errors (RLS or connectivity issues)
-      }
-    }, 1000);
-
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [sessionTokens]);
+    if (mounted) fetchHistory();
+  }, [mounted]);
 
   const handleCopy = () => {
     if (!report) return;
@@ -98,20 +107,17 @@ export default function Home() {
         a.download = metaMatch ? `${metaMatch[1]}_${metaMatch[2]}.pdf`.replace(/\s+/g, '_') : 'Analysis_Report.pdf';
         document.body.appendChild(a);
         a.click();
-        window.open(url, '_blank');
         window.URL.revokeObjectURL(url);
         a.remove();
       }
-    } catch (e) { console.error(e); } finally { setPdfLoading(false); }
+    } catch (e) {} finally { setPdfLoading(false); }
   };
 
   const handleStart = async () => {
     if (!resumeText || !jobUrl) return;
     setLoading(true);
-    const startTokens = sessionTokens;
     setReport('');
     setErrorMessage(null);
-
     const formData = new FormData();
     formData.append('resume', resumeText);
     formData.append('jobUrl', jobUrl);
@@ -119,10 +125,9 @@ export default function Home() {
 
     try {
       const res = await fetch('/api/analyze', { method: 'POST', body: formData });
-
       if (!res.ok) {
         const errorData = await res.json();
-        setErrorMessage(errorData.error || "Unknown Error");
+        setErrorMessage(errorData.error || "Error");
         setLoading(false);
         return;
       }
@@ -140,39 +145,18 @@ export default function Home() {
             if (line.startsWith('data: ')) {
               try {
                 const data = JSON.parse(line.replace('data: ', ''));
-                if (data.choices[0]?.delta?.content) {
-                  const content = data.choices[0].delta.content;
-                  fullText += content;
+                if (data.choices?.[0]?.delta?.content) {
+                  fullText += data.choices[0].delta.content;
                   setReport(fullText);
-                  setSessionTokens((prev) => prev + Math.ceil(content.length / 4));
-                  if (scrollRef.current) {
-                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-                  }
+                  if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                 } else if (data.tokens) {
-                  let delta = 0;
-                  if (data.tokens.total !== undefined) {
-                    delta = data.tokens.total;
-                  } else if (data.tokens.actor !== undefined) {
-                    delta = data.tokens.actor;
-                  }
-                  setSessionTokens(startTokens + delta);
+                  setSessionTokens(prev => prev + (data.tokens.total || 0));
                 }
               } catch (e) {}
             }
           }
         }
-
-        const metaMatch = fullText.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
-        const historyItem = {
-          id: Date.now(),
-          date: new Date().toLocaleString(),
-          title: metaMatch ? `${metaMatch[1]} - ${metaMatch[2]}`.toUpperCase() : t.analysisReportTitle,
-          url: jobUrl,
-          report: fullText
-        };
-        const existing = JSON.parse(localStorage.getItem('analysis_history') || '[]');
-        localStorage.setItem('analysis_history', JSON.stringify([historyItem, ...existing].slice(0, 20)));
-        window.dispatchEvent(new Event('history_updated'));
+        await fetchHistory();
       }
     } catch (e: any) {
       setErrorMessage(e.message);
@@ -186,19 +170,25 @@ export default function Home() {
   return (
       <div className="flex h-screen w-screen bg-slate-50 dark:bg-[#08080a] overflow-hidden relative font-sans text-slate-900 dark:text-slate-100">
         <div className={`fixed inset-0 z-50 lg:relative lg:inset-auto lg:flex ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} transition-transform duration-300`}>
-          <Sidebar t={t} onSelect={(rep, url) => { setReport(rep); setJobUrl(url); setIsSidebarOpen(false); setErrorMessage(null); }} />
-          {isSidebarOpen && (
-              <button onClick={() => setIsSidebarOpen(false)} className="absolute top-4 right-4 p-2 bg-white dark:bg-[#111114] rounded-full shadow-md text-slate-600"><X size={18} /></button>
-          )}
+          <Sidebar
+              t={t}
+              history={history}
+              onDelete={handleDeleteHistory}
+              onClear={handleClearHistory}
+              onSelect={(rep, url) => {
+                setReport(rep);
+                setJobUrl(url);
+                setIsSidebarOpen(false);
+                setErrorMessage(null);
+              }}
+          />
+          {isSidebarOpen && (<button onClick={() => setIsSidebarOpen(false)} className="absolute top-4 right-4 p-2 bg-white dark:bg-[#111114] rounded-full shadow-md text-slate-600"><X size={18} /></button>)}
         </div>
-
         {copied && (
             <div className="fixed top-4 lg:top-16 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-white px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
-              <CheckCircle size={12} />
-              <span className="text-[10px] font-black uppercase">{t.copied}</span>
+              <CheckCircle size={12} /><span className="text-[10px] font-black uppercase">{t.copied}</span>
             </div>
         )}
-
         <main className="flex-1 h-screen flex flex-col overflow-hidden relative">
           <div className="flex-1 overflow-hidden p-2 lg:p-4 flex flex-col items-center w-full">
             <div className="max-w-4xl w-full flex flex-col gap-2 h-full overflow-hidden">
@@ -207,7 +197,7 @@ export default function Home() {
                   <button onClick={() => setIsSidebarOpen(true)} className="p-1 lg:hidden text-slate-600 dark:text-slate-400"><Menu size={16} /></button>
                   <h1 className="text-[11px] lg:text-[13px] font-black uppercase tracking-tight">{t.brandName}</h1>
                   {sessionTokens > 0 && (
-                    <span className="ml-2 flex items-center gap-1.5 text-[10px] lg:text-xs font-semibold tracking-tight text-slate-500 dark:text-slate-400">
+                      <span className="ml-2 flex items-center gap-1.5 text-[10px] lg:text-xs font-semibold tracking-tight text-slate-500 dark:text-slate-400">
                       <Coins className="w-3 h-3 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                       <span>{sessionTokens.toLocaleString()} used</span>
                     </span>
@@ -215,40 +205,23 @@ export default function Home() {
                   {loading && <RobotIcon className="w-4 h-4 animate-spin text-indigo-500" />}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700">
-                    {theme === 'dark' ? <Sun size={12} /> : <Moon size={12} />}
-                  </button>
+                  <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700">{theme === 'dark' ? <Sun size={12} /> : <Moon size={12} />}</button>
                   <select value={lang} onChange={(e) => setLang(e.target.value)} className="bg-slate-100 dark:bg-[#1a1a20] border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded-lg text-[9px] font-black uppercase outline-none cursor-pointer">
                     {['en', 'de', 'es', 'ru', 'uk'].map(l => (<option key={l} value={l}>{l === 'uk' ? 'UA' : l.toUpperCase()}</option>))}
                   </select>
                 </div>
               </header>
-
               <div className="shrink-0">
                 <InputSection file={file} setFile={setFile} setResumeText={setResumeText} jobUrl={jobUrl} setJobUrl={setJobUrl} loading={loading} onStart={handleStart} t={t} />
               </div>
-
               <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-hidden mb-1">
                 {errorMessage && (
                     <div className="shrink-0 p-2.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-xl flex items-start gap-2.5 animate-in fade-in zoom-in duration-300">
-                      <AlertCircle className="text-amber-600 shrink-0 w-4 h-4" />
-                      <div className="flex flex-col gap-0">
-                        <p className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">System Notice</p>
-                        <p className="text-[10px] text-amber-800 dark:text-amber-300 leading-tight font-medium break-all">{errorMessage}</p>
-                      </div>
-                      <button onClick={() => setErrorMessage(null)} className="ml-auto p-0.5 text-amber-600"><X size={12} /></button>
+                      <AlertCircle className="text-amber-600 shrink-0 w-4 h-4" /><div className="flex flex-col gap-0"><p className="text-[9px] font-black uppercase tracking-widest leading-none mb-1">System Notice</p><p className="text-[10px] text-amber-800 dark:text-amber-300 leading-tight font-medium break-all">{errorMessage}</p></div><button onClick={() => setErrorMessage(null)} className="ml-auto p-0.5 text-amber-600"><X size={12} /></button>
                     </div>
                 )}
                 <div className="flex-1 min-h-0 overflow-hidden rounded-b-2xl lg:rounded-b-3xl">
-                  <OutputArea
-                      report={report}
-                      loading={loading}
-                      pdfLoading={pdfLoading}
-                      scrollRef={scrollRef}
-                      onCopy={handleCopy}
-                      onDownloadPdf={handleDownloadPdf}
-                      t={t}
-                  />
+                  <OutputArea report={report} loading={loading} pdfLoading={pdfLoading} scrollRef={scrollRef} onCopy={handleCopy} onDownloadPdf={handleDownloadPdf} t={t} />
                 </div>
               </div>
             </div>

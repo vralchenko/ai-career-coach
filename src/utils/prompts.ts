@@ -36,6 +36,8 @@ You are a Strict Auditor. Fact-check the draft against original documents.
 
 Structure:
 ${SYSTEM_PROMPT(targetLanguage)}
+
+CRITICAL: Do NOT add any sections like "Changes to the draft", "Audit Notes", or "Improvements" at the end. The final section MUST be the Interview Roadmap. Output ONLY the refined analysis content.
 `;
 
 export const CRITIC_USER_PROMPT = (resume: string, job: string, draft: string) => `
