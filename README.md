@@ -32,7 +32,7 @@ GROQ_API_KEY=your_key_here
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here  # Server-side logging (Supabase Settings > API > service_role)
-AI_MODEL_NAME=llama-3.3-70b-versatile  # default Groq model
+AI_MODEL_NAME=llama-3.1-8b-instant  # default Groq model
 ```
 
 ### Local Development
