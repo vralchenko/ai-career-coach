@@ -1,13 +1,10 @@
 import puppeteer from 'puppeteer';
 import { marked } from 'marked';
-import { supabaseAdmin } from '@/utils/supabaseClient';
 import { checkRateLimit } from '@/utils/rateLimit';
-import { parseUserAgent } from '@/utils/uaParser';
 
 export async function POST(req: Request) {
     let browser;
     try {
-        const userAgentRaw = req.headers.get('user-agent') || 'unknown';
         const forwarded = req.headers.get('x-forwarded-for');
         const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
 
@@ -27,24 +24,51 @@ export async function POST(req: Request) {
             <head>
                 <meta charset="UTF-8">
                 <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-                    body { font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.6; }
-                    h1 { color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 24px; font-weight: 900; }
-                    h2 { color: #4f46e5; margin-top: 20px; font-weight: 700; }
-                    ul { list-style-type: none; padding-left: 0; margin-bottom: 16px; }
-                    ul li { margin-bottom: 8px; position: relative; padding-left: 25px; }
-                    ul li::before { content: "•"; color: #6366f1; position: absolute; left: 0; font-weight: bold; font-size: 1.2em; }
-                    ol { padding-left: 25px; margin-bottom: 16px; color: #1e293b; }
-                    ol li { margin-bottom: 12px; padding-left: 5px; }
-                    strong { color: #0f172a; font-weight: 700; }
-                    p { margin-bottom: 12px; }
-                    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-                    th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
-                    th { background-color: #f8fafc; }
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+                    body { 
+                        font-family: 'Inter', -apple-system, sans-serif; 
+                        color: #1e293b; 
+                        line-height: 1.5; 
+                        font-size: 12px;
+                    }
+                    .container { max-width: 800px; margin: 0 auto; }
+                    
+                    h1 { color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 20px; font-weight: 800; font-size: 20px; }
+                    h2 { color: #4f46e5; margin-top: 16px; font-weight: 600; font-size: 16px; border-left: 4px solid #4f46e5; padding-left: 8px; }
+                    h3 { font-size: 14px; margin-top: 12px; color: #1e293b; }
+
+                    p { margin-bottom: 8px; }
+                    
+                    /* Исправленные стили списков */
+                    ul, ol { 
+                        padding-left: 20px; 
+                        margin-bottom: 12px; 
+                    }
+                    li { 
+                        margin-bottom: 4px; 
+                    }
+                    li > p { 
+                        margin-bottom: 0; /* Убираем лишний отступ внутри li */
+                        display: inline; /* Предотвращаем разрыв строки маркера */
+                    }
+                    
+                    ul { list-style-type: disc; }
+                    ul ul { list-style-type: circle; margin-top: 4px; }
+                    ol { list-style-type: decimal; }
+                    
+                    strong { color: #0f172a; font-weight: 600; }
+                    
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 11px; }
+                    th, td { border: 1px solid #e2e8f0; padding: 6px; text-align: left; }
+                    th { background-color: #f8fafc; font-weight: 600; }
+                    
+                    .page-break { page-break-before: always; }
                 </style>
             </head>
-            <body class="p-10 bg-white">
-                <div class="max-w-4xl mx-auto">${contentHtml}</div>
+            <body>
+                <div class="container">
+                    ${contentHtml}
+                </div>
             </body>
             </html>
         `;
@@ -61,7 +85,7 @@ export async function POST(req: Request) {
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
-            margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' }
+            margin: { top: '15mm', right: '15mm', bottom: '15mm', left: '15mm' }
         });
 
         return new Response(pdfBuffer as any, {
