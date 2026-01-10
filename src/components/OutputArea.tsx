@@ -3,7 +3,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, FileDown, Loader2, BarChart3, FileText } from 'lucide-react';
-import React from "react";
 
 interface OutputAreaProps {
     report: string;
@@ -75,7 +74,7 @@ export function OutputArea({
                         <button
                             onClick={onDownloadPdf}
                             disabled={pdfLoading}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/10 disabled:opacity-70"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-slate-100 dark:bg-[#1a1a20] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-200 transition-all disabled:opacity-70"
                         >
                             {pdfLoading ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
                             <span>{pdfLoading ? t.loading : t.downloadPdf}</span>

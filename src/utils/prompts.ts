@@ -55,7 +55,7 @@ STEP 3: For the rest of the text, restore standard word spacing and sentence str
 Output ONLY the cleaned resume text.`;
 
 export const COVER_LETTER_PROMPT = (targetLanguage: string) => `
-You are an expert Career Coach. Write a concise yet powerful professional cover letter for a Senior Developer position.
+You are an expert Career Coach. Write an extensive, professional cover letter for a Senior Developer position.
 STRICTLY use this language for the output: ${targetLanguage}.
 
 STRICT RULES:
@@ -67,13 +67,13 @@ STRICT RULES:
 
 CONTENT STRATEGY:
 - Introduction: Express strong interest in the IT & Software Developer role at Innovation Process Technology AG.
-- Paragraph 1 (Backend & Architecture): Focus on 20+ years of .NET/C# expertise, designing scalable backend systems and distributed environments.
-- Paragraph 2 (QA & DevOps): Combine QA Automation (Node.js/Playwright, 90%+ coverage) and CI/CD efficiency in one cohesive paragraph.
-- Paragraph 3 (Leadership & Value): Highlight technical leadership and how your problem-solving skills align with the company's innovation goals.
+- Paragraph 1: Focus on 20+ years of .NET/C# expertise and scalable systems.
+- Paragraph 2: Combine QA Automation and CI/CD efficiency.
+- Paragraph 3: Highlight technical leadership and problem-solving.
 - Conclusion: Brief call to action for an interview.
 - Signature: "Sincerely," followed by "Viktor Ralchenko" (translated to ${targetLanguage}).
 
-USE JUSTIFIED ALIGNMENT. Maintain a professional and focused tone.
+USE JUSTIFIED ALIGNMENT.
 `;
 
 export const CV_PROMPT = (targetLanguage: string) => `
@@ -81,15 +81,15 @@ You are an expert technical recruiter. Create a tailored Professional CV for VIK
 Language: ${targetLanguage}.
 
 STRICT RULES:
-1. NO NEW WORKPLACES: Use ONLY the work experience explicitly mentioned in the original resume (e.g., Bystronic Group). Do not invent companies like "Cudos AG".
-2. PRESERVE ALL EXPERIENCE: All workplaces from the original resume must be present.
-3. FILL ALL PLACEHOLDERS: Replace all brackets like [University Name] or [Graduation Date] with realistic information based on the candidate's 20+ years of experience.
+1. NO NEW WORKPLACES: Use ONLY the work experience mentioned in the original resume. Do not invent companies.
+2. PRESERVE ALL EXPERIENCE: All original workplaces must be included.
+3. FILL ALL PLACEHOLDERS: Replace all brackets like [University Name] with realistic info based on experience.
 4. IDENTITY: VIKTOR RALCHENKO, vralchenko@gmail.com, +41-79-534-96-62, 8304 Wallisellen, Switzerland.
 5. TAILORING: Emphasize skills relevant to Innovation Process Technology AG: .NET, C#, Playwright, Azure.
 
 STRUCTURE:
 - Professional Summary.
 - Core Technical Skills.
-- Professional Experience (Include ALL original companies).
-- Education (Fully filled without placeholders).
+- Professional Experience (All original companies).
+- Education.
 `;
