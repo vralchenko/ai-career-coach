@@ -12,10 +12,11 @@
   "waitingForInput": "Warten auf Eingabeanalyse...",
   "copied": "Kopiert",
   "analysisReportTitle": "Analysebericht",
-  "downloadPdf": "PDF herunterladen",
-  "downloadDocx": "DOCX herunterladen",
-  "downloadCv": "CV herunterladen",
-  "generatingDocx": "DOCX wird generiert...",
-  "generatingCv": "CV wird generiert...",
-  "initializingAI": "KI wird initialisiert..."
+  "downloadPdf": "Analyse PDF",
+  "downloadDocx": "Anschreiben (DOCX)",
+  "downloadCv": "Lebenslauf (DOCX)",
+  "generatingDocx": "Anschreiben wird erstellt...",
+  "generatingCv": "Lebenslauf wird angepasst...",
+  "initializingAI": "KI wird initialisiert...",
+  "loading": "Laden..."
 }

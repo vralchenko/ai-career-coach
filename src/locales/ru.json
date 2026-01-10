@@ -12,10 +12,11 @@
   "waitingForInput": "Ожидание данных для анализа...",
   "copied": "Скопировано",
   "analysisReportTitle": "Отчет об анализе",
-  "downloadPdf": "Скачать PDF",
-  "downloadDocx": "Скачать DOCX",
-  "downloadCv": "Скачать CV",
-  "generatingDocx": "Генерация DOCX...",
-  "generatingCv": "Генерация CV...",
-  "initializingAI": "Запуск AI..."
+  "downloadPdf": "Отчет (PDF)",
+  "downloadDocx": "Письмо (DOCX)",
+  "downloadCv": "Резюме (DOCX)",
+  "generatingDocx": "Создание письма...",
+  "generatingCv": "Подготовка резюме...",
+  "initializingAI": "Запуск AI...",
+  "loading": "Загрузка..."
 }

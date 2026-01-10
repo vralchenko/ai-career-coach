@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
                 children: children,
             }],
         });
-        
+
         const buffer = await Packer.toBuffer(doc);
         const uint8Array = new Uint8Array(buffer);
 

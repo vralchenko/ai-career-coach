@@ -12,10 +12,11 @@
   "waitingForInput": "Очікування даних для аналізу...",
   "copied": "Скопійовано",
   "analysisReportTitle": "Звіт про аналіз",
-  "downloadPdf": "Завантажити PDF",
-  "downloadDocx": "Завантажити DOCX",
-  "downloadCv": "Завантажити CV",
-  "generatingDocx": "Генерація DOCX...",
-  "generatingCv": "Генерація CV...",
-  "initializingAI": "Запуск AI..."
+  "downloadPdf": "Звіт (PDF)",
+  "downloadDocx": "Лист (DOCX)",
+  "downloadCv": "Резюме (DOCX)",
+  "generatingDocx": "Створення листа...",
+  "generatingCv": "Підготовка резюме...",
+  "initializingAI": "Запуск AI...",
+  "loading": "Завантаження..."
 }

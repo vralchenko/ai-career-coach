@@ -12,10 +12,11 @@
   "waitingForInput": "Esperando análisis de entrada...",
   "copied": "Copiado",
   "analysisReportTitle": "Informe de análisis",
-  "downloadPdf": "Descargar PDF",
-  "downloadDocx": "Descargar DOCX",
-  "downloadCv": "Descargar CV",
-  "generatingDocx": "Generando DOCX...",
-  "generatingCv": "Generando CV...",
-  "initializingAI": "Inicializando IA..."
+  "downloadPdf": "Informe PDF",
+  "downloadDocx": "Carta de Motivación (DOCX)",
+  "downloadCv": "CV Adaptado (DOCX)",
+  "generatingDocx": "Generando carta...",
+  "generatingCv": "Adaptando CV...",
+  "initializingAI": "Inicializando IA...",
+  "loading": "Cargando..."
 }
