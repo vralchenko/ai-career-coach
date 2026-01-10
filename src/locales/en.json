@@ -12,5 +12,10 @@
   "waitingForInput": "Waiting for input analysis...",
   "copied": "Copied",
   "analysisReportTitle": "Analysis Report",
-  "downloadPdf": "Download PDF"
+  "downloadPdf": "Download PDF",
+  "downloadDocx": "Download DOCX",
+  "downloadCv": "Download CV",
+  "generatingDocx": "Generating DOCX...",
+  "generatingCv": "Generating CV...",
+  "initializingAI": "Initializing AI..."
 }

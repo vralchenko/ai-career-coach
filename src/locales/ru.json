@@ -2,15 +2,20 @@
   "brandName": "AI КАРЬЕРНЫЙ КОУЧ",
   "history": "ИСТОРИЯ",
   "clear": "ОЧИСТИТЬ",
-  "noHistory": "Истории пока нет",
+  "noHistory": "История пуста",
   "uploadResume": "Загрузить резюме (PDF)",
   "jobUrlPlaceholder": "Ссылка на вакансию...",
   "analyzeNow": "Анализировать",
-  "analyzing": "Анализируем...",
+  "analyzing": "Анализ...",
   "analysisResult": "Результат анализа",
   "copyReport": "Копировать отчет",
   "waitingForInput": "Ожидание данных для анализа...",
   "copied": "Скопировано",
   "analysisReportTitle": "Отчет об анализе",
-  "downloadPdf": "Скачать PDF"
+  "downloadPdf": "Скачать PDF",
+  "downloadDocx": "Скачать DOCX",
+  "downloadCv": "Скачать CV",
+  "generatingDocx": "Генерация DOCX...",
+  "generatingCv": "Генерация CV...",
+  "initializingAI": "Запуск AI..."
 }

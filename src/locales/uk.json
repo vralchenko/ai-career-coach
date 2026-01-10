@@ -2,15 +2,20 @@
   "brandName": "AI КАР'ЄРНИЙ КОУЧ",
   "history": "ІСТОРІЯ",
   "clear": "ОЧИСТИТИ",
-  "noHistory": "Історії ще немає",
+  "noHistory": "Історія порожня",
   "uploadResume": "Завантажити резюме (PDF)",
   "jobUrlPlaceholder": "Посилання на вакансію...",
   "analyzeNow": "Аналізувати",
-  "analyzing": "Аналізуємо...",
+  "analyzing": "Аналіз...",
   "analysisResult": "Результат аналізу",
   "copyReport": "Копіювати звіт",
   "waitingForInput": "Очікування даних для аналізу...",
   "copied": "Скопійовано",
   "analysisReportTitle": "Звіт про аналіз",
-  "downloadPdf": "Завантажити PDF"
+  "downloadPdf": "Завантажити PDF",
+  "downloadDocx": "Завантажити DOCX",
+  "downloadCv": "Завантажити CV",
+  "generatingDocx": "Генерація DOCX...",
+  "generatingCv": "Генерація CV...",
+  "initializingAI": "Запуск AI..."
 }
