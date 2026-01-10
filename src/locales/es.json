@@ -1,9 +1,9 @@
 {
-  "brandName": "AI COACH DE CARRERA",
+  "brandName": "AI CAREER COACH",
   "history": "HISTORIAL",
   "clear": "LIMPIAR",
-  "noHistory": "Aún no hay historial",
-  "uploadResume": "Subir Currículum (PDF)",
+  "noHistory": "Sin historial aún",
+  "uploadResume": "Subir currículum (PDF)",
   "jobUrlPlaceholder": "URL de la vacante...",
   "analyzeNow": "Analizar ahora",
   "analyzing": "Analizando...",
@@ -12,5 +12,10 @@
   "waitingForInput": "Esperando análisis de entrada...",
   "copied": "Copiado",
   "analysisReportTitle": "Informe de análisis",
-  "downloadPdf": "Descargar PDF"
+  "downloadPdf": "Descargar PDF",
+  "downloadDocx": "Descargar DOCX",
+  "downloadCv": "Descargar CV",
+  "generatingDocx": "Generando DOCX...",
+  "generatingCv": "Generando CV...",
+  "initializingAI": "Inicializando IA..."
 }

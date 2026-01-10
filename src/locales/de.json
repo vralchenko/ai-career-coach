@@ -1,16 +1,21 @@
 {
-  "brandName": "AI KARRIERE-COACH",
+  "brandName": "AI CAREER COACH",
   "history": "VERLAUF",
   "clear": "LÖSCHEN",
   "noHistory": "Noch kein Verlauf",
   "uploadResume": "Lebenslauf hochladen (PDF)",
-  "jobUrlPlaceholder": "Job-URL...",
+  "jobUrlPlaceholder": "Stellen-URL...",
   "analyzeNow": "Jetzt analysieren",
-  "analyzing": "Analysiere...",
+  "analyzing": "Analyse läuft...",
   "analysisResult": "Analyseergebnis",
   "copyReport": "Bericht kopieren",
   "waitingForInput": "Warten auf Eingabeanalyse...",
   "copied": "Kopiert",
   "analysisReportTitle": "Analysebericht",
-  "downloadPdf": "PDF herunterladen"
+  "downloadPdf": "PDF herunterladen",
+  "downloadDocx": "DOCX herunterladen",
+  "downloadCv": "CV herunterladen",
+  "generatingDocx": "DOCX wird generiert...",
+  "generatingCv": "CV wird generiert...",
+  "initializingAI": "KI wird initialisiert..."
 }

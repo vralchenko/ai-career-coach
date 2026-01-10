@@ -22,6 +22,8 @@ export default function Home() {
   const [report, setReport] = useState('');
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [docxLoading, setDocxLoading] = useState(false);
+  const [cvLoading, setCvLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionTokens, setSessionTokens] = useState<number>(0);
@@ -48,37 +50,19 @@ export default function Home() {
           let displayTitle = 'JOB ANALYSIS';
           const reportText = item.recommendations || '';
           const metaMatch = reportText.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
-
           if (metaMatch) {
             displayTitle = `${metaMatch[1]} | ${metaMatch[2]}`.toUpperCase();
           } else if (item.job_url && item.job_url.startsWith('http')) {
             displayTitle = item.job_url.split('?')[0].split('/').filter(Boolean).pop()?.toUpperCase() || 'LINKEDIN JOB';
           }
-
-          return {
-            id: item.id,
-            date: new Date(item.created_at).toLocaleString(),
-            title: displayTitle,
-            url: item.job_url,
-            report: reportText
-          };
+          return { id: item.id, date: new Date(item.created_at).toLocaleString(), title: displayTitle, url: item.job_url, report: reportText };
         });
         setHistory(formattedHistory);
       }
     } catch (error) {}
   };
 
-  const handleDeleteHistory = (id: string | number) => {
-    setHistory(prev => prev.filter(item => item.id !== id));
-  };
-
-  const handleClearHistory = () => {
-    setHistory([]);
-  };
-
-  useEffect(() => {
-    if (mounted) fetchHistory();
-  }, [mounted]);
+  useEffect(() => { if (mounted) fetchHistory(); }, [mounted]);
 
   const handleCopy = () => {
     if (!report) return;
@@ -113,6 +97,54 @@ export default function Home() {
     } catch (e) {} finally { setPdfLoading(false); }
   };
 
+  const handleDownloadDocx = async () => {
+    if (!report || docxLoading) return;
+    setDocxLoading(true);
+    try {
+      const response = await fetch('/api/docx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report, lang }),
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const metaMatch = report.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
+        const fileName = metaMatch ? `CoverLetter_ViktorRalchenko_${metaMatch[1].trim()}.docx` : 'CoverLetter_Viktor_Ralchenko.docx';
+        a.download = fileName.replace(/\s+/g, '_');
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      }
+    } catch (e) {} finally { setDocxLoading(false); }
+  };
+
+  const handleDownloadCv = async () => {
+    if (!report || cvLoading) return;
+    setCvLoading(true);
+    try {
+      const response = await fetch('/api/cv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report, lang }),
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Viktor_Ralchenko_Tailored_CV.docx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      }
+    } catch (e) {} finally { setCvLoading(false); }
+  };
+
   const handleStart = async () => {
     if (!resumeText || !jobUrl) return;
     setLoading(true);
@@ -131,7 +163,6 @@ export default function Home() {
         setLoading(false);
         return;
       }
-
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let fullText = '';
@@ -170,18 +201,7 @@ export default function Home() {
   return (
       <div className="flex h-screen w-screen bg-slate-50 dark:bg-[#08080a] overflow-hidden relative font-sans text-slate-900 dark:text-slate-100">
         <div className={`fixed inset-0 z-50 lg:relative lg:inset-auto lg:flex ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} transition-transform duration-300`}>
-          <Sidebar
-              t={t}
-              history={history}
-              onDelete={handleDeleteHistory}
-              onClear={handleClearHistory}
-              onSelect={(rep, url) => {
-                setReport(rep);
-                setJobUrl(url);
-                setIsSidebarOpen(false);
-                setErrorMessage(null);
-              }}
-          />
+          <Sidebar t={t} history={history} onDelete={(id) => setHistory(prev => prev.filter(i => i.id !== id))} onClear={() => setHistory([])} onSelect={(rep, url) => { setReport(rep); setJobUrl(url); setIsSidebarOpen(false); setErrorMessage(null); }} />
           {isSidebarOpen && (<button onClick={() => setIsSidebarOpen(false)} className="absolute top-4 right-4 p-2 bg-white dark:bg-[#111114] rounded-full shadow-md text-slate-600"><X size={18} /></button>)}
         </div>
         {copied && (
@@ -221,7 +241,7 @@ export default function Home() {
                     </div>
                 )}
                 <div className="flex-1 min-h-0 overflow-hidden rounded-b-2xl lg:rounded-b-3xl">
-                  <OutputArea report={report} loading={loading} pdfLoading={pdfLoading} scrollRef={scrollRef} onCopy={handleCopy} onDownloadPdf={handleDownloadPdf} t={t} />
+                  <OutputArea report={report} loading={loading} pdfLoading={pdfLoading} docxLoading={docxLoading} cvLoading={cvLoading} scrollRef={scrollRef} onCopy={handleCopy} onDownloadPdf={handleDownloadPdf} onDownloadDocx={handleDownloadDocx} onDownloadCv={handleDownloadCv} t={t} />
                 </div>
               </div>
             </div>
