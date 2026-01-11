@@ -169,7 +169,7 @@ export default function Home() {
       const docxRes = await fetch('/api/cv', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ report, tailoredData, lang }),
+        body: JSON.stringify({ tailoredData, lang }),
       });
 
       if (!docxRes.ok) {
@@ -185,7 +185,10 @@ export default function Home() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `CV_${safeName}.docx`;
+
+      const baseName = lang === 'de' ? 'Lebenslauf' : 'CV';
+      a.download = `${baseName}_${safeName}.docx`;
+
       document.body.appendChild(a);
       a.click();
       a.remove();
