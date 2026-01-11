@@ -69,42 +69,42 @@ SIGNATURE FORMAT:
 ${candidateName}
 `;
 
-export const CV_PROMPT = (targetLanguage: string, tailoredData: any) => `
-You are an expert Technical Recruiter. Create a tailored CV using the JSON data.
-Language: ${targetLanguage}.
-
-DATA: ${JSON.stringify(tailoredData)}
-
-STRICT FORMATTING RULES:
-1. CONTACTS: Include clickable links for LinkedIn, GitHub, and Portfolio if available in the JSON. Format: [LinkedIn](url) | [GitHub](url).
-2. PROJECTS: For each project (e.g., ${tailoredData.candidate.pet_projects?.[0]?.name || 'Project'}), include its URL in parentheses next to the name.
-3. SWISS STANDARDS: Use "ss" instead of "ß" in German.
-4. KEYWORDS: Use **bold** for tech stack: ${tailoredData.candidate.skills?.join(', ')}.
-`;
-
 export const DATA_EXTRACTION_PROMPT = (targetLanguage: string) => `
-You are a Data Architect. Extract candidate information into a valid JSON object.
+You are a Precision Data Architect. Extract ALL information into a valid JSON object.
 Language: ${targetLanguage}.
+
+STRICT NAME RULES:
+1. Extract "full_name" EXACTLY: "Viktor Ralchenko". No "Vikt Or".
 
 JSON STRUCTURE:
 {
   "candidate": {
     "full_name": "string",
-    "contacts": { 
-      "email": "string", 
-      "phone": "string", 
-      "location": "string", 
-      "linkedin": "url", 
-      "github": "url", 
-      "portfolio": "url" 
-    },
-    "experience": [{"company": "string", "title": "string", "dates": "string", "achievements": [], "link": "url"}],
+    "target_position": "string",
+    "contacts": { "email": "string", "phone": "string", "location": "string", "linkedin": "url", "github": "url", "portfolio": "url" },
+    "education": [{"degree": "string", "institution": "string", "year": "string"}],
+    "experience": [{"company": "string", "title": "string", "dates": "string", "achievements": ["string"]}],
     "pet_projects": [{"name": "string", "description": "string", "stack": [], "url": "url"}]
   }
 }
 
 STRICT RULES:
-1. CAPTURE ALL LINKS: Search the resume for URLs related to LinkedIn, GitHub, Portfolios, and project websites. 
-2. Match these links to their respective sections (e.g., a GitHub link should go into contacts or a specific project).
-3. Output ONLY the JSON object.
+1. NO DATA LOSS: You must capture EVERY achievement bullet point from the original experience section.
+2. FULL HISTORY: Do not summarize or skip older roles or education.
+`;
+
+export const CV_PROMPT = (targetLanguage: string, tailoredData: any) => `
+You are an expert Technical Recruiter. Generate a detailed CV.
+Language: ${targetLanguage}.
+
+DATA: ${JSON.stringify(tailoredData)}
+
+STRICT HEADER RULES:
+1. NAME: Start with "# ${tailoredData.candidate.full_name}".
+2. POSITION: Immediately on the NEXT line, add "> ${tailoredData.candidate.target_position}".
+3. CONTACTS: Format as plain text without Markdown brackets.
+
+STRICT BODY RULES:
+1. CONTENT: Include at least 4-6 detailed bullet points for each professional role.
+2. EDUCATION: Ensure the Education section is included at the end.
 `;
