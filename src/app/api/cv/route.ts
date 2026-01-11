@@ -2,27 +2,29 @@ import { NextRequest } from 'next/server';
 import Groq from 'groq-sdk';
 import { Document, Packer, Paragraph, TextRun, AlignmentType } from 'docx';
 import { CV_PROMPT } from '@/utils/prompts';
+import { checkRateLimit } from '@/utils/rateLimit';
 
 export async function POST(req: NextRequest) {
     try {
-        const { report, lang = 'en' } = await req.json();
+        const forwarded = req.headers.get('x-forwarded-for');
+        const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+
+        const { error: limitError, status: limitStatus } = await checkRateLimit(ip, 20);
+        if (limitError) return new Response(JSON.stringify({ error: limitError }), { status: limitStatus });
+
+        const { tailoredData, lang = 'en' } = await req.json();
         const apiKey = process.env.GROQ_API_KEY;
-        const modelName = process.env.AI_MODEL_NAME || "llama-3.3-70b-versatile";
 
         if (!apiKey) return new Response(JSON.stringify({ error: "API Key missing" }), { status: 500 });
 
-        const nameMatch = report.match(/\*\*Candidate:\*\*\s*([^\n]+)/i) ||
-            report.match(/(?:Candidate|Name|Кандидат|Имя):\s*([^\n|]+)/i);
-        const candidateName = nameMatch ? nameMatch[1].replace(/[*]/g, '').trim() : "Candidate";
-
         const groq = new Groq({ apiKey });
         const completion = await groq.chat.completions.create({
-            model: modelName,
+            model: process.env.AI_MODEL_NAME || "llama-3.3-70b-versatile",
             messages: [
-                { role: "system", content: CV_PROMPT(lang, candidateName) },
-                { role: "user", content: `Original Resume/Analysis:\n${report}` }
+                { role: "system", content: CV_PROMPT(lang, tailoredData) },
+                { role: "user", content: "Generate the CV based on the provided structured data." }
             ],
-            temperature: 0.3,
+            temperature: 0.2,
         });
 
         const cvText = completion.choices[0]?.message?.content || "";
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
                     const isBold = part.startsWith('**') && part.endsWith('**');
                     return new TextRun({
                         text: isBold ? part.replace(/\*\*/g, '') : part,
-                        bold: isBold || (isHeader && !line.includes(candidateName)),
+                        bold: isBold || (isHeader && !line.includes(tailoredData.candidate.full_name)),
                         size: isHeader ? 26 : 22,
                         font: "Arial"
                     });
@@ -55,14 +57,11 @@ export async function POST(req: NextRequest) {
             }],
         });
 
-        const baseFileName = (lang === 'ru' || lang === 'uk') ? 'Резюме' : 'CV';
-        const finalFileName = `${baseFileName}_${candidateName.replace(/\s+/g, '_')}.docx`;
-
         const buffer = await Packer.toBuffer(doc);
         return new Response(new Uint8Array(buffer), {
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition': `attachment; filename="${encodeURIComponent(finalFileName)}"`,
+                'Content-Disposition': `attachment; filename="Tailored_CV.docx"`,
             },
         });
     } catch (error: any) {

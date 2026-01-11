@@ -23,7 +23,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [docxLoading, setDocxLoading] = useState(false);
-  const [cvLoading, setCvLoading] = useState(false);
+  const [loadingCV, setLoadingCV] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionTokens, setSessionTokens] = useState<number>(0);
@@ -59,10 +59,16 @@ export default function Home() {
         });
         setHistory(formattedHistory);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error('History fetch error:', error);
+    }
   };
 
-  useEffect(() => { if (mounted) fetchHistory(); }, [mounted]);
+  useEffect(() => {
+    if (mounted) {
+      void fetchHistory();
+    }
+  }, [mounted]);
 
   const handleCopy = () => {
     if (!report) return;
@@ -113,7 +119,9 @@ export default function Home() {
         window.URL.revokeObjectURL(url);
         a.remove();
       }
-    } catch (e) {} finally { setPdfLoading(false); }
+    } catch (e) {
+      console.error('PDF Error:', e);
+    } finally { setPdfLoading(false); }
   };
 
   const handleDownloadDocx = async () => {
@@ -138,32 +146,55 @@ export default function Home() {
         window.URL.revokeObjectURL(url);
         a.remove();
       }
-    } catch (e) {} finally { setDocxLoading(false); }
+    } catch (e) {
+      console.error('Docx Error:', e);
+    } finally { setDocxLoading(false); }
   };
 
-  const handleDownloadCv = async () => {
-    if (!report || cvLoading) return;
-    setCvLoading(true);
+  const handleDownloadCV = async () => {
+    setLoadingCV(true);
     try {
-      const response = await fetch('/api/cv', {
+      const extractRes = await fetch('/api/extract-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ report, lang }),
+        body: JSON.stringify({ resumeText, analysisText: report, lang }),
       });
-      if (response.ok) {
-        const { company, position, candidateName } = getMetadata();
-        const baseName = (lang === 'ru' || lang === 'uk') ? 'Резюме' : 'CV';
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${baseName}_${candidateName}_${company}_${position}.docx`.replace(/\s+/g, '_');
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
+
+      if (!extractRes.ok) {
+        console.error('Extraction failed');
+        return;
       }
-    } catch (e) {} finally { setCvLoading(false); }
+      const tailoredData = await extractRes.json();
+
+      const docxRes = await fetch('/api/cv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report, tailoredData, lang }),
+      });
+
+      if (!docxRes.ok) {
+        console.error('CV generation failed');
+        return;
+      }
+
+      const { company, position } = getMetadata();
+      const fullName = tailoredData?.candidate?.full_name || 'Candidate';
+      const safeName = `${fullName}_${company}_${position}`.replace(/\s+/g, '_');
+
+      const blob = await docxRes.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `CV_${safeName}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('CV Generation Error:', error);
+    } finally {
+      setLoadingCV(false);
+    }
   };
 
   const handleStart = async () => {
@@ -208,7 +239,7 @@ export default function Home() {
             }
           }
         }
-        await fetchHistory();
+        void fetchHistory();
       }
     } catch (e: any) {
       setErrorMessage(e.message);
@@ -262,7 +293,7 @@ export default function Home() {
                     </div>
                 )}
                 <div className="flex-1 min-h-0 overflow-hidden rounded-b-2xl lg:rounded-b-3xl">
-                  <OutputArea report={report} loading={loading} pdfLoading={pdfLoading} docxLoading={docxLoading} cvLoading={cvLoading} scrollRef={scrollRef} onCopy={handleCopy} onDownloadPdf={handleDownloadPdf} onDownloadDocx={handleDownloadDocx} onDownloadCv={handleDownloadCv} t={t} />
+                  <OutputArea report={report} loading={loading} pdfLoading={pdfLoading} docxLoading={docxLoading} cvLoading={loadingCV} scrollRef={scrollRef} onCopy={handleCopy} onDownloadPdf={handleDownloadPdf} onDownloadDocx={handleDownloadDocx} onDownloadCv={handleDownloadCV} t={t} />
                 </div>
               </div>
             </div>

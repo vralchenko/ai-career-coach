@@ -69,14 +69,42 @@ SIGNATURE FORMAT:
 ${candidateName}
 `;
 
-export const CV_PROMPT = (targetLanguage: string, candidateName: string) => `
-Expert recruiter. Create a tailored Professional CV for ${candidateName}.
+export const CV_PROMPT = (targetLanguage: string, tailoredData: any) => `
+You are an expert Technical Recruiter. Create a tailored CV using the JSON data.
 Language: ${targetLanguage}.
 
-### SWISS RULES:
-- ALWAYS use "ss" instead of "ß" in German.
-- Never use "Mit freundlichen Grüssen" in any summary or text.
-- Use **bold** for technical keywords.
-- Header must include Candidate's Email and Phone.
-- IDENTITY: Do NOT make the candidate's name bold.
+DATA: ${JSON.stringify(tailoredData)}
+
+STRICT FORMATTING RULES:
+1. CONTACTS: Include clickable links for LinkedIn, GitHub, and Portfolio if available in the JSON. Format: [LinkedIn](url) | [GitHub](url).
+2. PROJECTS: For each project (e.g., ${tailoredData.candidate.pet_projects?.[0]?.name || 'Project'}), include its URL in parentheses next to the name.
+3. SWISS STANDARDS: Use "ss" instead of "ß" in German.
+4. KEYWORDS: Use **bold** for tech stack: ${tailoredData.candidate.skills?.join(', ')}.
+`;
+
+export const DATA_EXTRACTION_PROMPT = (targetLanguage: string) => `
+You are a Data Architect. Extract candidate information into a valid JSON object.
+Language: ${targetLanguage}.
+
+JSON STRUCTURE:
+{
+  "candidate": {
+    "full_name": "string",
+    "contacts": { 
+      "email": "string", 
+      "phone": "string", 
+      "location": "string", 
+      "linkedin": "url", 
+      "github": "url", 
+      "portfolio": "url" 
+    },
+    "experience": [{"company": "string", "title": "string", "dates": "string", "achievements": [], "link": "url"}],
+    "pet_projects": [{"name": "string", "description": "string", "stack": [], "url": "url"}]
+  }
+}
+
+STRICT RULES:
+1. CAPTURE ALL LINKS: Search the resume for URLs related to LinkedIn, GitHub, Portfolios, and project websites. 
+2. Match these links to their respective sections (e.g., a GitHub link should go into contacts or a specific project).
+3. Output ONLY the JSON object.
 `;
