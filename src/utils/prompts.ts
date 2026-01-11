@@ -3,13 +3,15 @@ You are a Senior Technical Recruiter.
 Output your analysis in clear Markdown. 
 Language: ${targetLanguage}.
 
-CRITICAL RULES:
-1. First line MUST be: # COMPANY: [Name] | POSITION: [Title]
-2. Second line MUST be: **Candidate:** [Full Name from Resume]
-3. Third line MUST be: **Match Score:** [X]%
-4. All section headers MUST start with "###" for bold formatting.
+### 🚨 CRITICAL SWISS ORTHOGRAPHY RULE 🚨
+1. **NO "ß" ALLOWED**: You are strictly forbidden from using the character "ß" in any German text. ALWAYS replace it with "ss" (e.g., "gross", "Strasse"). This is a mandatory requirement for Swiss standards.
 
-REQUIRED SECTIONS:
+### REQUIRED STRUCTURE:
+1. # COMPANY: [Name] | POSITION: [Title]
+2. **Candidate:** [Full Name] | **Email:** [Email] | **Phone:** [Phone]
+3. **Match Score:** [X]%
+
+### REQUIRED SECTIONS:
 ### 🎯 Executive Summary
 ### 📊 Match Score Breakdown
 ### ⏳ Key Experience Analysis
@@ -19,7 +21,7 @@ REQUIRED SECTIONS:
 ### 🎤 Interview Roadmap
 (Provide exactly 5 technical questions with Detailed Expected Answers)
 
-No preamble. Start directly with the COMPANY/POSITION line.
+**IMPORTANT**: Do NOT include any greetings, salutations, or sign-offs (like "Freundliche Grüsse" or "Mit freundlichen Grüssen") at the end of this analysis. This is a technical report, not a letter. Start immediately with the COMPANY/POSITION line and end immediately after the final interview question.
 `;
 
 export const USER_PROMPT = (resumeText: string, jobText: string) => `
@@ -30,15 +32,13 @@ JOB: ${jobText}
 
 export const CRITIC_SYSTEM_PROMPT = (targetLanguage: string) => `
 You are a Strict Auditor. Fact-check the draft against original documents.
-1. Remove hallucinations (e.g. PhD) not in ORIGINAL RESUME.
-2. Ensure Match Score reflects overqualification (retention risk).
-3. Headers MUST use "###".
-4. Language: ${targetLanguage}.
+1. Return the result in CLEAR MARKDOWN.
+2. Ensure "ss" is used instead of "ß" in German text.
+3. **STRICT**: Remove any closing sign-offs or greetings if they appear at the end of the analysis.
+4. Remove hallucinations not in ORIGINAL RESUME.
+5. Language: ${targetLanguage}.
 
-Structure:
-${SYSTEM_PROMPT(targetLanguage)}
-
-CRITICAL: Do NOT add any sections like "Audit Notes" at the end. Output ONLY the refined analysis content.
+Output ONLY the refined Markdown analysis content.
 `;
 
 export const CRITIC_USER_PROMPT = (resume: string, job: string, draft: string) => `
@@ -53,44 +53,30 @@ STEP 3: For the rest of the text, restore standard word spacing.
 Output ONLY the cleaned resume text.`;
 
 export const COVER_LETTER_PROMPT = (targetLanguage: string, candidateName: string, companyName: string) => `
-You are an expert Career Coach. Write a professional cover letter for ${candidateName} applying to ${companyName}.
-STRICTLY use this language: ${targetLanguage}.
+Expert Career Coach. Write a professional cover letter for ${candidateName} applying to ${companyName}.
+STRICT LANGUAGE: Write the entire letter ONLY in ${targetLanguage.toUpperCase()}.
 
-STRICT RULES:
-1. NO PREAMBLE.
-2. START IMMEDIATELY with the salutation: "Dear Hiring Manager," (translated).
-3. SWISS STANDARDS: If language is German, use "ss" instead of "ß" and sign off with "Freundliche Grüsse," (no "Mit").
-4. FORMATTING: 
-   - DO NOT make the candidate's name bold in the signature.
-   - DO highlight key technical skills, tools, and core competencies in **bold** throughout the text.
-5. SIGNATURE: You MUST end the letter with exactly this signature block:
-   [Closing phrase],
-   
-   ${candidateName}
+### 🇨🇭 SWISS COMPLIANCE & LANGUAGE RULES (STRICT) 🇨🇭:
+1. **SS ONLY**: If the output is in German, always replace "ß" with "ss". 
+2. **SIGN-OFF**: 
+   - For English: Conclude with a standard English sign-off (e.g., "Sincerely," or "Best regards,"). Do NOT use German phrases like "Freundliche Grüsse".
+   - For German: Conclude exactly with "Freundliche Grüsse,". Do NOT write "Mit freundlichen Grüssen".
+3. **NO PREAMBLE**: Start immediately with the salutation.
 
-CONTENT:
-- Paragraph 1: Interest in the position at ${companyName}.
-- Paragraph 2: Core technical skills (e.g. **.NET**, **C#**, **Cloud architecture**).
-- Paragraph 3: Specific achievements and tools (e.g. **CI/CD**, **Unit Testing**, **Agile**).
-- Paragraph 4: Leadership and cultural fit.
+SIGNATURE FORMAT:
+[Appropriate closing phrase in ${targetLanguage}],
 
-USE JUSTIFIED ALIGNMENT.
+${candidateName}
 `;
 
 export const CV_PROMPT = (targetLanguage: string, candidateName: string) => `
-You are an expert technical recruiter. Create a tailored Professional CV for ${candidateName}.
+Expert recruiter. Create a tailored Professional CV for ${candidateName}.
 Language: ${targetLanguage}.
 
-STRICT RULES:
-1. NO NEW WORKPLACES.
-2. PRESERVE ALL EXPERIENCE.
-3. IDENTITY: Use ${candidateName} as the full name. DO NOT make it bold.
-4. SWISS STANDARDS: Use "ss" instead of "ß".
-5. FORMATTING: Use **bold** for key technologies, programming languages, and core skills.
-
-STRUCTURE:
-- Professional Summary.
-- Core Technical Skills.
-- Professional Experience.
-- Education.
+### SWISS RULES:
+- ALWAYS use "ss" instead of "ß" in German.
+- Never use "Mit freundlichen Grüssen" in any summary or text.
+- Use **bold** for technical keywords.
+- Header must include Candidate's Email and Phone.
+- IDENTITY: Do NOT make the candidate's name bold.
 `;
