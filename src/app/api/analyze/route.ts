@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import Groq from 'groq-sdk';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import {
     SYSTEM_PROMPT,
     USER_PROMPT,
@@ -18,10 +19,14 @@ export const dynamic = 'force-dynamic';
 
 async function getJobDescription(url: string): Promise<string> {
     if (!url.startsWith('http')) return url;
+
     const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        args: chromium.args,
+        defaultViewport: (chromium as any).defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: true,
     });
+
     try {
         const page = await browser.newPage();
         await page.setUserAgent({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' });
@@ -34,7 +39,11 @@ async function getJobDescription(url: string): Promise<string> {
             }
             return document.body.innerText;
         });
-    } catch (error) { return url; } finally { await browser.close(); }
+    } catch (error) {
+        return url;
+    } finally {
+        await browser.close();
+    }
 }
 
 export async function POST(req: NextRequest) {
