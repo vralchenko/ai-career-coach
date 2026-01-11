@@ -11,11 +11,15 @@ export async function POST(req: NextRequest) {
 
         if (!apiKey) return new Response(JSON.stringify({ error: "API Key missing" }), { status: 500 });
 
+        const nameMatch = report.match(/\*\*Candidate:\*\*\s*([^\n]+)/i) ||
+            report.match(/(?:Candidate|Name|Кандидат|Имя):\s*([^\n|]+)/i);
+        const candidateName = nameMatch ? nameMatch[1].replace(/[*]/g, '').trim() : "Candidate";
+
         const groq = new Groq({ apiKey });
         const completion = await groq.chat.completions.create({
             model: modelName,
             messages: [
-                { role: "system", content: CV_PROMPT(lang) },
+                { role: "system", content: CV_PROMPT(lang, candidateName) },
                 { role: "user", content: `Original Resume/Analysis:\n${report}` }
             ],
             temperature: 0.3,
@@ -27,8 +31,8 @@ export async function POST(req: NextRequest) {
         const children = lines.map((line) => {
             const isHeader = line.startsWith('#') || (line.toUpperCase() === line && line.length > 5);
             const cleanLine = line.replace(/^#+\s*/, '');
-
             const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
+
             return new Paragraph({
                 alignment: AlignmentType.JUSTIFIED,
                 spacing: { line: 300, before: isHeader ? 240 : 0, after: 120 },
@@ -36,7 +40,7 @@ export async function POST(req: NextRequest) {
                     const isBold = part.startsWith('**') && part.endsWith('**');
                     return new TextRun({
                         text: isBold ? part.replace(/\*\*/g, '') : part,
-                        bold: isBold || isHeader,
+                        bold: isBold || (isHeader && !line.includes(candidateName)),
                         size: isHeader ? 26 : 22,
                         font: "Arial"
                     });
@@ -51,13 +55,14 @@ export async function POST(req: NextRequest) {
             }],
         });
 
-        const buffer = await Packer.toBuffer(doc);
-        const uint8Array = new Uint8Array(buffer);
+        const baseFileName = (lang === 'ru' || lang === 'uk') ? 'Резюме' : 'CV';
+        const finalFileName = `${baseFileName}_${candidateName.replace(/\s+/g, '_')}.docx`;
 
-        return new Response(uint8Array, {
+        const buffer = await Packer.toBuffer(doc);
+        return new Response(new Uint8Array(buffer), {
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'Content-Disposition': 'attachment; filename="Viktor_Ralchenko_CV.docx"',
+                'Content-Disposition': `attachment; filename="${encodeURIComponent(finalFileName)}"`,
             },
         });
     } catch (error: any) {

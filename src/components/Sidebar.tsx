@@ -61,12 +61,13 @@ export function Sidebar({ t, history, onSelect, onDelete, onClear }: SidebarProp
         <>
             <aside className="w-full sm:w-[320px] lg:w-[380px] h-full bg-white dark:bg-[#111114] border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-xl lg:shadow-none relative">
                 <div className="p-5 lg:p-7 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/30 dark:bg-white/5">
-                    <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
-                        <History size={20} />
-                        <h2 className="text-sm font-black uppercase tracking-[0.15em] leading-none">
-                            {t.historyTitle}
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-[#1a1a20] rounded-lg border border-slate-200 dark:border-slate-700">
+                        <History size={16} className="text-indigo-500" />
+                        <h2 className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 leading-none">
+                            {t.history}
                         </h2>
                     </div>
+
                     {history.length > 0 && (
                         <button
                             onClick={() => setIsModalOpen(true)}
@@ -102,16 +103,19 @@ export function Sidebar({ t, history, onSelect, onDelete, onClear }: SidebarProp
                                     <h3 className="text-[11px] lg:text-xs font-black text-slate-900 dark:text-white leading-tight line-clamp-2 pr-6 uppercase tracking-tight">
                                         {item.title}
                                     </h3>
-                                    <div className="flex items-center gap-1.5 text-blue-500">
-                                        <ExternalLink size={12} />
-                                        <span className="text-[10px] font-medium truncate opacity-80">{item.url}</span>
-                                    </div>
+                                    {item.url && (
+                                        <div className="flex items-center gap-1.5 text-blue-500">
+                                            <ExternalLink size={12} />
+                                            <span className="text-[10px] font-medium truncate opacity-80">{item.url.replace('https://', '')}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
             </aside>
+
             <ConfirmModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}

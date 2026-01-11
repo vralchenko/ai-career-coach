@@ -73,6 +73,25 @@ export default function Home() {
     });
   };
 
+  const getMetadata = () => {
+    const metaMatch = report.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
+    const company = metaMatch ? metaMatch[1].trim() : "Company";
+    const position = metaMatch ? metaMatch[2].trim() : "Position";
+
+    const nameRegex = /(?:Candidate|Name|Кандидат|Ім'я|Имя):\s*([^\n|]+)/gi;
+    const names: string[] = [];
+    let match;
+    while ((match = nameRegex.exec(report)) !== null) {
+      names.push(match[1].trim());
+    }
+    const isCyrillicLang = ['ru', 'uk'].includes(lang);
+    const candidateName = isCyrillicLang
+        ? (names.find(n => /[а-яёіїєґ]/i.test(n)) || "Кандидат")
+        : (names.find(n => /^[a-z\s-]+$/i.test(n)) || "Candidate");
+
+    return { company, position, candidateName };
+  };
+
   const handleDownloadPdf = async () => {
     if (!report || pdfLoading) return;
     setPdfLoading(true);
@@ -83,12 +102,12 @@ export default function Home() {
         body: JSON.stringify({ html: report, lang }),
       });
       if (response.ok) {
+        const { company, position } = getMetadata();
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const metaMatch = report.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
-        a.download = metaMatch ? `${metaMatch[1]}_${metaMatch[2]}.pdf`.replace(/\s+/g, '_') : 'Analysis_Report.pdf';
+        a.download = `Analysis_${company}_${position}.pdf`.replace(/\s+/g, '_');
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -107,13 +126,13 @@ export default function Home() {
         body: JSON.stringify({ report, lang }),
       });
       if (response.ok) {
+        const { company, position, candidateName } = getMetadata();
+        const baseName = lang === 'de' ? 'Bewerbung' : 'CoverLetter';
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const metaMatch = report.match(/COMPANY:\s*(.*?)\s*\|\s*POSITION:\s*(.*)$/m);
-        const fileName = metaMatch ? `CoverLetter_ViktorRalchenko_${metaMatch[1].trim()}.docx` : 'CoverLetter_Viktor_Ralchenko.docx';
-        a.download = fileName.replace(/\s+/g, '_');
+        a.download = `${baseName}_${candidateName}_${company}_${position}.docx`.replace(/\s+/g, '_');
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -132,11 +151,13 @@ export default function Home() {
         body: JSON.stringify({ report, lang }),
       });
       if (response.ok) {
+        const { company, position, candidateName } = getMetadata();
+        const baseName = (lang === 'ru' || lang === 'uk') ? 'Резюме' : 'CV';
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'Viktor_Ralchenko_Tailored_CV.docx';
+        a.download = `${baseName}_${candidateName}_${company}_${position}.docx`.replace(/\s+/g, '_');
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

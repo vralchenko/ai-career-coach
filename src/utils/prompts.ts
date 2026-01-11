@@ -5,8 +5,9 @@ Language: ${targetLanguage}.
 
 CRITICAL RULES:
 1. First line MUST be: # COMPANY: [Name] | POSITION: [Title]
-2. Second line MUST be: **Match Score:** [X]%
-3. All section headers MUST start with "###" for bold formatting.
+2. Second line MUST be: **Candidate:** [Full Name from Resume]
+3. Third line MUST be: **Match Score:** [X]%
+4. All section headers MUST start with "###" for bold formatting.
 
 REQUIRED SECTIONS:
 ### 🎯 Executive Summary
@@ -37,7 +38,7 @@ You are a Strict Auditor. Fact-check the draft against original documents.
 Structure:
 ${SYSTEM_PROMPT(targetLanguage)}
 
-CRITICAL: Do NOT add any sections like "Changes to the draft", "Audit Notes", or "Improvements" at the end. The final section MUST be the Interview Roadmap. Output ONLY the refined analysis content.
+CRITICAL: Do NOT add any sections like "Audit Notes" at the end. Output ONLY the refined analysis content.
 `;
 
 export const CRITIC_USER_PROMPT = (resume: string, job: string, draft: string) => `
@@ -46,50 +47,50 @@ ORIGINAL JOB: ${job}
 DRAFT TO REFINE: ${draft}
 `;
 
-export const CLEANUP_PROMPT = `STEP 1: Identify the Contact Information section (Email, LinkedIn, GitHub, Portfolio).
-
-STEP 2: For Emails and URLs, remove ALL internal spaces. CRITICAL: Do NOT add or insert any new characters like dots (.) or dashes (-) that were not present in the character sequence. For example, if you see 'v r a l c h e n k o @ g m a i l . c o m', join it as 'vralchenko@gmail.com', not 'vr.alchenko'.
-
-STEP 3: For the rest of the text, restore standard word spacing and sentence structure.
-
+export const CLEANUP_PROMPT = `STEP 1: Identify the Contact Information section.
+STEP 2: For Emails and URLs, remove ALL internal spaces. 
+STEP 3: For the rest of the text, restore standard word spacing.
 Output ONLY the cleaned resume text.`;
 
-export const COVER_LETTER_PROMPT = (targetLanguage: string) => `
-You are an expert Career Coach. Write an extensive, professional cover letter for a Senior Developer position.
-STRICTLY use this language for the output: ${targetLanguage}.
+export const COVER_LETTER_PROMPT = (targetLanguage: string, candidateName: string, companyName: string) => `
+You are an expert Career Coach. Write a professional cover letter for ${candidateName} applying to ${companyName}.
+STRICTLY use this language: ${targetLanguage}.
 
 STRICT RULES:
-1. NO PREAMBLE: Start directly with the salutation.
-2. NO CONTACT HEADER: Do not include name, email, phone, or address at the top.
-3. START IMMEDIATELY with: "Dear Hiring Manager," (translated to ${targetLanguage}).
-4. LENGTH: 4 medium-sized, impactful paragraphs. It should cover about 60-70% of an A4 page.
-5. IDENTITY: The candidate is VIKTOR RALCHENKO. Use this for the signature.
+1. NO PREAMBLE.
+2. START IMMEDIATELY with the salutation: "Dear Hiring Manager," (translated).
+3. SWISS STANDARDS: If language is German, use "ss" instead of "ß" and sign off with "Freundliche Grüsse," (no "Mit").
+4. FORMATTING: 
+   - DO NOT make the candidate's name bold in the signature.
+   - DO highlight key technical skills, tools, and core competencies in **bold** throughout the text.
+5. SIGNATURE: You MUST end the letter with exactly this signature block:
+   [Closing phrase],
+   
+   ${candidateName}
 
-CONTENT STRATEGY:
-- Introduction: Express strong interest in the IT & Software Developer role at Innovation Process Technology AG.
-- Paragraph 1: Focus on 20+ years of .NET/C# expertise and scalable systems.
-- Paragraph 2: Combine QA Automation and CI/CD efficiency.
-- Paragraph 3: Highlight technical leadership and problem-solving.
-- Conclusion: Brief call to action for an interview.
-- Signature: "Sincerely," followed by "Viktor Ralchenko" (translated to ${targetLanguage}).
+CONTENT:
+- Paragraph 1: Interest in the position at ${companyName}.
+- Paragraph 2: Core technical skills (e.g. **.NET**, **C#**, **Cloud architecture**).
+- Paragraph 3: Specific achievements and tools (e.g. **CI/CD**, **Unit Testing**, **Agile**).
+- Paragraph 4: Leadership and cultural fit.
 
 USE JUSTIFIED ALIGNMENT.
 `;
 
-export const CV_PROMPT = (targetLanguage: string) => `
-You are an expert technical recruiter. Create a tailored Professional CV for VIKTOR RALCHENKO.
+export const CV_PROMPT = (targetLanguage: string, candidateName: string) => `
+You are an expert technical recruiter. Create a tailored Professional CV for ${candidateName}.
 Language: ${targetLanguage}.
 
 STRICT RULES:
-1. NO NEW WORKPLACES: Use ONLY the work experience mentioned in the original resume. Do not invent companies.
-2. PRESERVE ALL EXPERIENCE: All original workplaces must be included.
-3. FILL ALL PLACEHOLDERS: Replace all brackets like [University Name] with realistic info based on experience.
-4. IDENTITY: VIKTOR RALCHENKO, vralchenko@gmail.com, +41-79-534-96-62, 8304 Wallisellen, Switzerland.
-5. TAILORING: Emphasize skills relevant to Innovation Process Technology AG: .NET, C#, Playwright, Azure.
+1. NO NEW WORKPLACES.
+2. PRESERVE ALL EXPERIENCE.
+3. IDENTITY: Use ${candidateName} as the full name. DO NOT make it bold.
+4. SWISS STANDARDS: Use "ss" instead of "ß".
+5. FORMATTING: Use **bold** for key technologies, programming languages, and core skills.
 
 STRUCTURE:
 - Professional Summary.
 - Core Technical Skills.
-- Professional Experience (All original companies).
+- Professional Experience.
 - Education.
 `;
