@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         const forwarded = req.headers.get('x-forwarded-for');
         const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
 
-        const { error: limitError, status: limitStatus } = await checkRateLimit(ip, 10);
+        const { error: limitError, status: limitStatus } = await checkRateLimit(ip, 20);
         if (limitError) return new Response(JSON.stringify({ error: limitError }), { status: limitStatus });
 
         const geo = await geoip.lookup(ip);

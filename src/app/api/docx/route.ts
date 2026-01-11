@@ -2,9 +2,18 @@ import { NextRequest } from 'next/server';
 import Groq from 'groq-sdk';
 import { Document, Packer, Paragraph, TextRun, AlignmentType } from 'docx';
 import { COVER_LETTER_PROMPT } from '@/utils/prompts';
+import { checkRateLimit } from '@/utils/rateLimit';
 
 export async function POST(req: NextRequest) {
     try {
+        const forwarded = req.headers.get('x-forwarded-for');
+        const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+
+        const { error: limitError, status: limitStatus } = await checkRateLimit(ip, 20);
+        if (limitError) {
+            return new Response(JSON.stringify({ error: limitError }), { status: limitStatus });
+        }
+
         const { report, lang = 'en' } = await req.json();
         const apiKey = process.env.GROQ_API_KEY;
         const modelName = process.env.AI_MODEL_NAME || "llama-3.3-70b-versatile";
