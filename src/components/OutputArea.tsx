@@ -1,8 +1,7 @@
-'use client';
-
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy, FileDown, Loader2, BarChart3, FileText } from 'lucide-react';
+import { Copy, FileDown, Loader2, BarChart3, FileText, Edit2, Check } from 'lucide-react';
 
 interface OutputAreaProps {
     report: string;
@@ -15,22 +14,26 @@ interface OutputAreaProps {
     onDownloadPdf: () => void;
     onDownloadDocx: () => void;
     onDownloadCv: () => void;
+    onReportChange: (report: string) => void;
     t: any;
 }
 
 export function OutputArea({
-                               report,
-                               loading,
-                               pdfLoading,
-                               docxLoading,
-                               cvLoading,
-                               scrollRef,
-                               onCopy,
-                               onDownloadPdf,
-                               onDownloadDocx,
-                               onDownloadCv,
-                               t
-                           }: OutputAreaProps) {
+    report,
+    loading,
+    pdfLoading,
+    docxLoading,
+    cvLoading,
+    scrollRef,
+    onCopy,
+    onDownloadPdf,
+    onDownloadDocx,
+    onDownloadCv,
+    onReportChange,
+    t
+}: OutputAreaProps) {
+    const [isEditing, setIsEditing] = useState(false);
+
     if (!loading && !report) return null;
 
     return (
@@ -41,6 +44,15 @@ export function OutputArea({
                     <h2 className="text-[10px] lg:text-xs font-black uppercase tracking-widest text-slate-500">
                         {t.analysisReportTitle}
                     </h2>
+                    {report && (
+                        <button
+                            onClick={() => setIsEditing(!isEditing)}
+                            className="ml-2 p-1.5 text-slate-400 hover:text-indigo-500 transition-colors rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                            title={isEditing ? "Finish Editing" : "Edit Report"}
+                        >
+                            {isEditing ? <Check size={14} /> : <Edit2 size={14} />}
+                        </button>
+                    )}
                 </div>
 
                 {report && (
@@ -83,7 +95,7 @@ export function OutputArea({
                 )}
             </div>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar scroll-smooth">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar scroll-smooth relative">
                 {loading && !report ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
                         <Loader2 className="animate-spin text-indigo-500" size={32} />
@@ -92,11 +104,20 @@ export function OutputArea({
                         </p>
                     </div>
                 ) : (
-                    <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-black prose-headings:text-slate-900 dark:prose-headings:text-white prose-headings:uppercase prose-strong:font-bold prose-strong:text-indigo-600 dark:prose-strong:text-indigo-400 animate-in fade-in duration-700">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {report}
-                        </ReactMarkdown>
-                    </div>
+                    isEditing ? (
+                        <textarea
+                            value={report}
+                            onChange={(e) => onReportChange(e.target.value)}
+                            className="w-full h-full p-4 bg-slate-50 dark:bg-[#1a1a20] border-none outline-none resize-none font-mono text-sm"
+                            placeholder="Edit your report here..."
+                        />
+                    ) : (
+                        <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-black prose-headings:text-slate-900 dark:prose-headings:text-white prose-headings:uppercase prose-strong:font-bold prose-strong:text-indigo-600 dark:prose-strong:text-indigo-400 animate-in fade-in duration-700">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {report}
+                            </ReactMarkdown>
+                        </div>
+                    )
                 )}
             </div>
         </div>
