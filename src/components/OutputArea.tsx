@@ -37,7 +37,7 @@ export function OutputArea({
     if (!loading && !report) return null;
 
     return (
-        <div className="bg-white dark:bg-[#111114] rounded-2xl lg:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[500px] lg:h-[600px]">
+        <div className="bg-white dark:bg-[#111114] rounded-2xl lg:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-full">
             <div className="p-3 lg:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50 dark:bg-white/5">
                 <div className="flex items-center gap-2">
                     <BarChart3 size={18} className="text-indigo-500" />
