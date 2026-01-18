@@ -60,12 +60,8 @@ export async function POST(req: Request) {
             </html>
         `;
 
-        browser = await puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: (chromium as any).defaultViewport,
-            executablePath: await chromium.executablePath(),
-            headless: true,
-        });
+        const { getBrowser } = await import('@/utils/browser');
+        browser = await getBrowser();
 
         const page = await browser.newPage();
         await page.setContent(finalHtml, { waitUntil: 'networkidle0' });
