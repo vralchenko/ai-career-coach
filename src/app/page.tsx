@@ -294,7 +294,7 @@ export default function Home() {
                 </div>
               )}
               <div className="flex-1 min-h-0 overflow-hidden rounded-b-2xl lg:rounded-b-3xl">
-                <OutputArea report={report} loading={loading} pdfLoading={pdfLoading} docxLoading={docxLoading} cvLoading={loadingCV} scrollRef={scrollRef} onCopy={handleCopy} onDownloadPdf={handleDownloadPdf} onDownloadDocx={handleDownloadDocx} onDownloadCv={handleDownloadCV} t={t} />
+                <OutputArea report={report} loading={loading} pdfLoading={pdfLoading} docxLoading={docxLoading} cvLoading={loadingCV} scrollRef={scrollRef} onCopy={handleCopy} onDownloadPdf={handleDownloadPdf} onDownloadDocx={handleDownloadDocx} onDownloadCv={handleDownloadCV} onReportChange={setReport} t={t} />
               </div>
             </div>
           </div>
