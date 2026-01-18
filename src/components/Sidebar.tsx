@@ -26,13 +26,16 @@ export function Sidebar({ t, history, onSelect, onDelete, onClear }: SidebarProp
 
     const handleClearAll = async () => {
         try {
-            const { error } = await supabase
-                .from('analysis_logs')
-                .delete()
-                .filter('id', 'not.is', null);
+            const response = await fetch('/api/history', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clearAll: true }),
+            });
 
-            if (!error) {
+            if (response.ok) {
                 onClear();
+            } else {
+                console.error('Failed to clear history');
             }
         } catch (error) {
             console.error('Failed to clear history:', error);
@@ -44,13 +47,16 @@ export function Sidebar({ t, history, onSelect, onDelete, onClear }: SidebarProp
     const deleteItem = async (e: React.MouseEvent, id: string | number) => {
         e.stopPropagation();
         try {
-            const { error } = await supabase
-                .from('analysis_logs')
-                .delete()
-                .eq('id', id);
+            const response = await fetch('/api/history', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id }),
+            });
 
-            if (!error) {
+            if (response.ok) {
                 onDelete(id);
+            } else {
+                console.error('Failed to delete item');
             }
         } catch (error) {
             console.error('Failed to delete item:', error);

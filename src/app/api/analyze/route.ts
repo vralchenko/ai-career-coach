@@ -20,18 +20,13 @@ export const dynamic = 'force-dynamic';
 async function getJobDescription(url: string): Promise<string> {
     if (!url.startsWith('http')) return url;
 
-    const browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(
-            'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
-        ),
-        headless: chromium.headless,
-    });
-
+    let browser;
     try {
+        const { getBrowser } = await import('@/utils/browser');
+        browser = await getBrowser();
+
         const page = await browser.newPage();
-        await page.setUserAgent({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' });
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         await page.goto(url, { waitUntil: 'networkidle2' });
         return await page.evaluate(() => {
             const selectors = ['.description__text', '.show-more-less-html__markup', '[class*="description"]', '#job-details'];
@@ -42,9 +37,10 @@ async function getJobDescription(url: string): Promise<string> {
             return document.body.innerText;
         });
     } catch (error) {
+        console.error('Scraping error:', error);
         return url;
     } finally {
-        await browser.close();
+        if (browser) await browser.close();
     }
 }
 
@@ -73,7 +69,7 @@ export async function POST(req: NextRequest) {
         const model = process.env.AI_MODEL_NAME || 'llama-3.1-8b-instant';
 
         const cleanupResponse = await groq.chat.completions.create({
-            model: 'llama-3.1-8b-instant',
+            model: model,
             messages: [
                 { role: "system", content: CLEANUP_PROMPT },
                 { role: "user", content: resumeText },
