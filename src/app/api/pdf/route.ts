@@ -3,6 +3,8 @@ import chromium from '@sparticuz/chromium-min';
 import { marked } from 'marked';
 import { checkRateLimit } from '@/utils/rateLimit';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
     let browser;
     try {
