@@ -4,6 +4,8 @@ import { Document, Packer, Paragraph, TextRun, AlignmentType } from 'docx';
 import { COVER_LETTER_PROMPT } from '@/utils/prompts';
 import { checkRateLimit } from '@/utils/rateLimit';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
     try {
         const forwarded = req.headers.get('x-forwarded-for');
