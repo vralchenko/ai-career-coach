@@ -71,7 +71,7 @@ export function InputSection({ file, setFile, setResumeText, jobUrl, setJobUrl, 
                             <Upload className={`w-3.5 h-3.5 flex-shrink-0 ${file ? 'text-emerald-500' : 'text-slate-400'}`} />
                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 truncate">{file ? file.name : t.uploadResume}</p>
                         </div>
-                        <input data-presentation-id="resume-upload-input" type="file" className="hidden" accept=".pdf" onChange={handleFileChange} />
+                        <input data-presentation-id="resume-upload-input" type="file" className="absolute inset-0 opacity-0 cursor-pointer w-0 h-0" accept=".pdf" onChange={handleFileChange} />
                     </label>
                     {file && (
                         <button onClick={(e) => { e.preventDefault(); setFile(null); setResumeText(''); }} className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-rose-500 transition-colors">

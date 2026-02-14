@@ -70,6 +70,7 @@ export default function Home() {
     const handleMessage = (event: MessageEvent) => {
       const { type, action, payload } = event.data;
       if (type !== 'PRESENTATION_COMMAND') return;
+      console.log('PRESENTATION_COMMAND received:', action, payload);
 
       switch (action) {
         case 'FILL_FIELD':
