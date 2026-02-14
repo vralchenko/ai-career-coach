@@ -65,13 +65,14 @@ export function InputSection({ file, setFile, setResumeText, jobUrl, setJobUrl, 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 <div className="relative w-full">
                     <label
+                        htmlFor="resume-upload-input"
                         data-presentation-id="resume-upload-label"
-                        className={`flex items-center justify-center h-10 w-full rounded-lg lg:rounded-xl border border-dashed transition-all cursor-pointer ${file ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/5' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111114] hover:border-indigo-500'}`}>
-                        <div className="flex items-center gap-2 px-3 pr-8 overflow-hidden">
+                        className={`relative flex items-center justify-center h-10 w-full rounded-lg lg:rounded-xl border border-dashed transition-all cursor-pointer ${file ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/5' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111114] hover:border-indigo-500'}`}>
+                        <div className="flex items-center gap-2 px-3 pr-8 overflow-hidden pointer-events-none">
                             <Upload className={`w-3.5 h-3.5 flex-shrink-0 ${file ? 'text-emerald-500' : 'text-slate-400'}`} />
                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 truncate">{file ? file.name : t.uploadResume}</p>
                         </div>
-                        <input data-presentation-id="resume-upload-input" type="file" className="absolute inset-0 opacity-0 cursor-pointer w-0 h-0" accept=".pdf" onChange={handleFileChange} />
+                        <input id="resume-upload-input" data-presentation-id="resume-upload-input" type="file" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20" accept=".pdf" onChange={handleFileChange} />
                     </label>
                     {file && (
                         <button onClick={(e) => { e.preventDefault(); setFile(null); setResumeText(''); }} className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-rose-500 transition-colors">
