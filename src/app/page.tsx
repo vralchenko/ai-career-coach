@@ -104,6 +104,10 @@ export default function Home() {
         case 'GENERATE_CV':
           handleDownloadCV();
           break;
+        case 'CLICK':
+          const clickEl = document.querySelector(`[data-presentation-id="${payload.name}"]`);
+          if (clickEl) (clickEl as HTMLElement).click();
+          break;
         case 'SET_LANGUAGE':
           setLang(payload.lang);
           break;
