@@ -105,6 +105,10 @@ export default function Home() {
         case 'GENERATE_CV':
           handleDownloadCV();
           break;
+        case 'MOCK_RESUME':
+          setResumeText(payload.value || "Experienced Senior Software Engineer with 20+ years in .NET, React, and AI.");
+          setFile({ name: "Resume_Viktor_Ralchenko.pdf" } as any);
+          break;
         case 'CLICK':
           const clickEl = document.querySelector(`[data-presentation-id="${payload.name}"]`);
           if (clickEl) {
