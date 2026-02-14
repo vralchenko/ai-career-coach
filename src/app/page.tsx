@@ -66,7 +66,53 @@ export default function Home() {
     if (mounted) {
       void fetchHistory();
     }
-  }, [mounted]);
+
+    const handleMessage = (event: MessageEvent) => {
+      const { type, action, payload } = event.data;
+      if (type !== 'PRESENTATION_COMMAND') return;
+
+      switch (action) {
+        case 'FILL_FIELD':
+          if (payload.name === 'jobUrl') setJobUrl(payload.value);
+          if (payload.name === 'resumeText') setResumeText(payload.value);
+          break;
+        case 'HIGHLIGHT_FIELD':
+          const el = document.querySelector(`[data-presentation-id="${payload.name}"]`);
+          if (el) {
+            el.classList.add('ring-4', 'ring-purple-500', 'ring-offset-2', 'scale-[1.02]');
+            setTimeout(() => el.classList.remove('ring-4', 'ring-purple-500', 'ring-offset-2', 'scale-[1.02]'), 2000);
+          }
+          break;
+        case 'SUBMIT':
+          handleStart();
+          break;
+        case 'SCROLL':
+          if (payload.direction === 'down') {
+            if (scrollRef.current) scrollRef.current.scrollTop += (payload.value || 500);
+            else window.scrollBy(0, payload.value || 500);
+          } else if (payload.direction === 'up') {
+            if (scrollRef.current) scrollRef.current.scrollTop = 0;
+            else window.scrollTo(0, 0);
+          }
+          break;
+        case 'GENERATE_PDF':
+          handleDownloadPdf();
+          break;
+        case 'GENERATE_COVER':
+          handleDownloadDocx();
+          break;
+        case 'GENERATE_CV':
+          handleDownloadCV();
+          break;
+        case 'SET_LANGUAGE':
+          setLang(payload.lang);
+          break;
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [mounted, lang, resumeText, jobUrl, report]);
 
   const handleCopy = () => {
     if (!report) return;
