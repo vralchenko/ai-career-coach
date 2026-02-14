@@ -106,7 +106,12 @@ export default function Home() {
           break;
         case 'CLICK':
           const clickEl = document.querySelector(`[data-presentation-id="${payload.name}"]`);
-          if (clickEl) (clickEl as HTMLElement).click();
+          if (clickEl) {
+            clickEl.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+            if (clickEl instanceof HTMLInputElement && clickEl.type === 'file') {
+              clickEl.click();
+            }
+          }
           break;
         case 'SET_LANGUAGE':
           setLang(payload.lang);
