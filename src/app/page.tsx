@@ -68,17 +68,18 @@ export default function Home() {
     }
 
     const handleMessage = (event: MessageEvent) => {
-      const { type, action, payload } = event.data;
-      if (type !== 'PRESENTATION_COMMAND') return;
+      const data = event.data;
+      if (!data || data.type !== 'PRESENTATION_COMMAND') return;
+      const { action, payload } = data;
       console.log('PRESENTATION_COMMAND received:', action, payload);
 
       switch (action) {
         case 'FILL_FIELD':
-          if (payload.name === 'jobUrl') setJobUrl(payload.value);
+          if (payload.name === 'jobUrl' || payload.name === 'job-url-input') setJobUrl(payload.value);
           if (payload.name === 'resumeText') setResumeText(payload.value);
           break;
         case 'HIGHLIGHT_FIELD':
-          const el = document.querySelector(`[data-presentation-id="${payload.name}"]`);
+          const el = document.querySelector(`[data-presentation-id="${payload.name}"], [id="${payload.name}"], [name="${payload.name}"]`);
           if (el) {
             el.classList.add('ring-4', 'ring-purple-500', 'ring-offset-2', 'scale-[1.02]');
             setTimeout(() => el.classList.remove('ring-4', 'ring-purple-500', 'ring-offset-2', 'scale-[1.02]'), 2000);
@@ -88,12 +89,9 @@ export default function Home() {
           handleStart();
           break;
         case 'SCROLL':
-          if (payload.direction === 'down') {
-            if (scrollRef.current) scrollRef.current.scrollTop += (payload.value || 500);
-            else window.scrollBy(0, payload.value || 500);
-          } else if (payload.direction === 'up') {
-            if (scrollRef.current) scrollRef.current.scrollTop = 0;
-            else window.scrollTo(0, 0);
+          if (scrollRef.current) {
+            const value = payload.value || (payload.direction === 'down' ? 500 : -1000);
+            scrollRef.current.scrollBy({ top: value, behavior: 'smooth' });
           }
           break;
         case 'GENERATE_PDF':
@@ -110,11 +108,18 @@ export default function Home() {
           setFile({ name: "Resume_Viktor_Ralchenko.pdf" } as any);
           break;
         case 'CLICK':
-          const clickEl = document.querySelector(`[data-presentation-id="${payload.name}"]`);
-          if (clickEl) {
-            clickEl.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-            if (clickEl instanceof HTMLInputElement && clickEl.type === 'file') {
-              clickEl.click();
+          // Special handling for Mock File Upload
+          if (payload.name === 'resume-upload-input' || payload.name === 'resume-upload-label') {
+            const mockFile = new File(["Mock Resume Content"], "resume_senior_dotnet.pdf", { type: "application/pdf" });
+            setFile(mockFile);
+            setResumeText("SENIOR .NET DEVELOPER\nExperience: 10 years\nSkills: C#, .NET Core, Azure, Microservices, SQL Server.");
+          } else {
+            const clickEl = document.querySelector(`[data-presentation-id="${payload.name}"], [id="${payload.name}"], [name="${payload.name}"]`);
+            if (clickEl) {
+              clickEl.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+              if (clickEl instanceof HTMLInputElement && clickEl.type === 'file') {
+                clickEl.click();
+              }
             }
           }
           break;
@@ -126,15 +131,25 @@ export default function Home() {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [mounted, lang, resumeText, jobUrl, report]);
+  }, [mounted, lang, resumeText, jobUrl, report, loading]);
 
   const handleCopy = () => {
     if (!report) return;
     const cleanText = report.replace(/^#\s*COMPANY:.*$/m, '').replace(/Match Score:\s*\d+%/i, '').trim();
-    navigator.clipboard.writeText(cleanText).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+
+    // Attempt real clipboard write
+    navigator.clipboard.writeText(cleanText)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch((err) => {
+        console.warn('Clipboard write failed:', err);
+        // Fallback: If it fails (e.g. document not focused in iframe), 
+        // still show the visual success for the presentation simulation
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
   };
 
   const getMetadata = () => {

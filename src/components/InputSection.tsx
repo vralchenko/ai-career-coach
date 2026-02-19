@@ -33,8 +33,8 @@ export function InputSection({ file, setFile, setResumeText, jobUrl, setJobUrl, 
                 }
                 // Clean extracted PDF text: collapse multiple whitespace and join spaced uppercase acronyms (e.g., "S E N I O R" -> "SENIOR")
                 const cleanedText = fullText
-                    .replace(/\\s+/g, ' ')
-                    .replace(/(?<=[A-Z])\\s(?=[A-Z])/g, '')
+                    .replace(/\s+/g, ' ')
+                    .replace(/(?<=[A-Z])\s(?=[A-Z])/g, '')
                     .trim();
                 setResumeText(cleanedText);
             } catch (error) { setResumeText(''); }
@@ -52,8 +52,8 @@ export function InputSection({ file, setFile, setResumeText, jobUrl, setJobUrl, 
                     placeholder={t.jobUrlPlaceholder}
                     value={jobUrl}
                     onChange={(e) => setJobUrl(e.target.value)}
-                    className="w-full h-10 bg-white dark:bg-[#111114] border border-slate-200 dark:border-slate-800 rounded-lg lg:rounded-xl pl-9 pr-9 text-[11px] focus:ring-1 focus:ring-indigo-500 outline-none transition-all dark:text-white"
                     data-presentation-id="job-url-input"
+                    className="w-full h-10 bg-white dark:bg-[#111114] border border-slate-200 dark:border-slate-800 rounded-lg lg:rounded-xl pl-9 pr-9 text-[11px] focus:ring-1 focus:ring-indigo-500 outline-none transition-all dark:text-white"
                 />
                 {jobUrl && (
                     <button onClick={() => setJobUrl('')} className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
