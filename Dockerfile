@@ -54,14 +54,14 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
     && apt-get install -y google-chrome-stable --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -u 1000 user
+# node:20-slim already has user "node" with UID 1000
 
 WORKDIR /app
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-COPY --chown=user package*.json ./
+COPY --chown=node package*.json ./
 RUN npm ci
 
 ARG NEXT_PUBLIC_SUPABASE_URL
@@ -70,11 +70,11 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-COPY --chown=user . .
+COPY --chown=node . .
 RUN npm run build
 
 ENV PORT=7860
 EXPOSE 7860
 
-USER user
+USER node
 CMD ["npm", "run", "start"]
