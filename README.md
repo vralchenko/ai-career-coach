@@ -1,3 +1,13 @@
+---
+title: AI Career Coach
+emoji: 💼
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # AI Career Coach 🤖💼
 
 A professional tool designed to analyze the alignment between a resume and job requirements. The system uses AI to conduct a deep comparison of skills, identify critical gaps, and prepare candidates for interviews.

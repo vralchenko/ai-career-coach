@@ -1,4 +1,4 @@
-﻿FROM node:20
+FROM node:20-slim
 
 RUN apt-get update && apt-get install -y \
     wget \
@@ -54,30 +54,27 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
     && apt-get install -y google-chrome-stable --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
+RUN useradd -m -u 1000 user
+
 WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ARG GROQ_API_KEY
-ARG GROQ_API_URL
-ARG SUPABASE_SERVICE_ROLE_KEY
-ARG AI_MODEL_NAME
-
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV GROQ_API_KEY=$GROQ_API_KEY
-ENV GROQ_API_URL=$GROQ_API_URL
-ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
-ENV AI_MODEL_NAME=$AI_MODEL_NAME
-
-COPY . .
-RUN npm run build
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-EXPOSE 10000
+COPY --chown=user package*.json ./
+RUN npm ci
+
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+COPY --chown=user . .
+RUN npm run build
+
+ENV PORT=7860
+EXPOSE 7860
+
+USER user
 CMD ["npm", "run", "start"]
