@@ -12,6 +12,10 @@ pinned: false
 
 A professional tool designed to analyze the alignment between a resume and job requirements. The system uses AI to conduct a deep comparison of skills, identify critical gaps, and prepare candidates for interviews.
 
+## 🌐 Live Demo
+
+* **Live App:** [vralchenko-aicareercoach.hf.space](https://vralchenko-aicareercoach.hf.space/)
+
 ## 🚀 Key Features
 
 * **Smart Analysis**: Compares PDF resumes with job descriptions directly from a URL.
