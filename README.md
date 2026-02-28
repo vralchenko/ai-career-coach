@@ -25,7 +25,7 @@ A professional tool designed to analyze the alignment between a resume and job r
 * **Frontend**: Next.js 16 (App Router), Turbopack, Tailwind CSS 4, Lucide React.
 * **Backend**: Next.js API Routes, Puppeteer (for job scraping and PDF generation).
 * **AI Engine**: Groq API (Llama 3.1 8B / 70B models).
-* **Deployment**: Render (Docker Runtime).
+* **Deployment**: [Hugging Face Spaces](https://vralchenko-aicareercoach.hf.space/) (Docker).
 
 ## ⚙️ Setup and Installation
 
